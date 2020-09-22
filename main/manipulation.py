@@ -13,6 +13,7 @@ class Manipulation:
     Check your voter's preference. is there a possible winner (p) that the voter truthfully ranks above winner(w)? If
     no, pick next voter. If yes, check (from the most preferred such p to the least preferred one) whether the voter
     can manipulate:
+        -
          - if the voter gives p score 1 and w score 0, not possible.
          - if the voter gives p score 0 and w score 0, check whether p would win with score 1. If no, move on. If yes,
           find the minimum number of edges to add/omit/flip (respecting transitivity and the relevant costs) to give p
