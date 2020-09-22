@@ -3,7 +3,7 @@ from typing import List, Tuple, Union
 
 import pandas as pd
 
-from main.manipulation_utils import find_matrices_with_score, one_cost_children_generation, two_cost_children_generation
+from iterative_voting.main import find_matrices_with_score, one_cost_children_generation, two_cost_children_generation
 from .data_processing import check_transitivity, evaluate_profile, get_score_of_alternative_by_voter, \
     get_winners_from_scores
 
@@ -38,7 +38,6 @@ class Manipulation:
         method: str,
         k: int,
         alphabetical_order_of_alternatives: dict
-
     ):
 
         self.all_preferences = all_preferences  # These are the preferences of all the voters in a list
@@ -109,27 +108,32 @@ class Manipulation:
                 scores_of_alternatives[str(p)] += 1
                 would_win = get_winners_from_scores(scores_of_alternatives, self.alphabetical_order)[0] == p
                 if would_win:
-                    print(f'Alternative {p} is preferred and would win if given greater score. Investigating possible '
-                          f'manipulation.')
+                    print(
+                        f'Alternative {p} is preferred and would win if given greater score. Investigating possible '
+                        f'manipulation.'
+                    )
                     all_prefs = copy.deepcopy(self.all_preferences)
 
                     # first generate all the 1-cost children of the original matrix
-                    new_preferences = one_cost_children_generation(parent_matrix=self.preference,
-                                                                   cost_of_parent_matrix=self.absolute_cost_of_preference,
-                                                                   alternatives_of_interest=[p, self.winner],
-                                                                   index_of_p=p, index_of_w=self.winner,
-                                                                   rule=self.method)
+                    new_preferences = one_cost_children_generation(
+                        parent_matrix=self.preference,
+                        cost_of_parent_matrix=self.absolute_cost_of_preference,
+                        alternatives_of_interest=[p, self.winner],
+                        index_of_p=p,
+                        index_of_w=self.winner,
+                        rule=self.method
+                    )
                     self.all_generated_matrices += new_preferences
 
-                    mainpulation_happened, winner = self.check_if_manipulation_happened(all_prefs, new_preferences, p)
-                    if mainpulation_happened:
+                    manipulation_happened, winner = self.check_if_manipulation_happened(all_prefs, new_preferences, p)
+                    if manipulation_happened:
                         return all_prefs, winner
 
                     # since the direct one-cost children of the original didn't work, for every child generate the
                     # 1-cost children and the 2-cost children from the previous matrix.
 
-                    mainpulation_happened, winner = self.tree_generation_level_1_onwards(all_prefs, p)
-                    if mainpulation_happened:
+                    manipulation_happened, winner = self.tree_generation_level_1_onwards(all_prefs, p)
+                    if manipulation_happened:
                         return all_prefs, winner
                 else:
                     continue
@@ -142,10 +146,9 @@ class Manipulation:
 
                 continue_with_next_alternative = False
                 while possible_winners[-1] != p:
-                    if get_score_of_alternative_by_voter(self.preference,
-                                                         self.method,
-                                                         self.k,
-                                                         possible_winners[-1]) == 0:
+                    if get_score_of_alternative_by_voter(
+                        self.preference, self.method, self.k, possible_winners[-1]
+                    ) == 0:
                         continue_with_next_alternative = True
                         break
                     else:
@@ -172,52 +175,52 @@ class Manipulation:
         return None
 
     def tree_generation_level_1_onwards(self, all_prefs, p):
-        # TODO: a while loop here that will end either when manipution happened (See also "another
-        #  observation) or when tree has ended.
-        mainpulation_happened = False
+        manipulation_happened = False
         winner = None
-        while break_condition?:
-            max_cost_so_far = max([x[0] for x in self.all_generated_matrices])
-            matrices_to_examine_cost_1 = find_matrices_with_score(self.all_generated_matrices, max_cost_so_far)
-            matrices_to_examine_cost_2 = find_matrices_with_score(self.all_generated_matrices,
-                                                                  max_cost_so_far - 1)
+        while True:
+            old_max_cost_so_far = max([x[0] for x in self.all_generated_matrices])
+            matrices_to_examine_cost_1 = find_matrices_with_score(self.all_generated_matrices, old_max_cost_so_far)
+            matrices_to_examine_cost_2 = find_matrices_with_score(self.all_generated_matrices, old_max_cost_so_far - 1)
             for (parent_mat_1, parent_mat_2) in zip(matrices_to_examine_cost_1, matrices_to_examine_cost_2):
                 index_of_p, index_of_w, relevant_cells = self.get_children_generation_options(p, parent_mat_1)
-                new_preferences = one_cost_children_generation(parent_matrix=parent_mat_1[2],
-                                                               cost_of_parent_matrix=max_cost_so_far,
-                                                               alternatives_of_interest=relevant_cells,
-                                                               index_of_p=index_of_p, index_of_w=index_of_w,
-                                                               rule=self.method,
-                                                               matrices_not_to_generate=[x[2] for x in
-                                                                                         self.all_generated_matrices])
+                new_preferences = one_cost_children_generation(
+                    parent_matrix=parent_mat_1[2],
+                    cost_of_parent_matrix=old_max_cost_so_far,
+                    alternatives_of_interest=relevant_cells,
+                    index_of_p=index_of_p,
+                    index_of_w=index_of_w,
+                    rule=self.method,
+                    matrices_not_to_generate=[x[2] for x in self.all_generated_matrices]
+                )
                 index_of_p, index_of_w, relevant_cells = self.get_children_generation_options(p, parent_mat_2)
-                new_preferences += two_cost_children_generation(parent_matrix=parent_mat_2[2],
-                                                                cost_of_parent_matrix=max_cost_so_far - 1,
-                                                                alternatives_of_interest=relevant_cells,
-                                                                index_of_p=index_of_p, index_of_w=index_of_w,
-                                                                rule=self.method,
-                                                                matrices_not_to_generate=[x[2] for x in
-                                                                                          self.all_generated_matrices])
+                new_preferences += two_cost_children_generation(
+                    parent_matrix=parent_mat_2[2],
+                    cost_of_parent_matrix=old_max_cost_so_far - 1,
+                    alternatives_of_interest=relevant_cells,
+                    index_of_p=index_of_p,
+                    index_of_w=index_of_w,
+                    rule=self.method,
+                    matrices_not_to_generate=[x[2] for x in self.all_generated_matrices]
+                )
                 if not new_preferences:  # we exhausted the level cause new_preferences is an empty list
                     break
-                    # TODO: also break from the while loop here
                 self.all_generated_matrices += new_preferences
 
-                mainpulation_happened, winner = self.check_if_manipulation_happened(all_prefs, new_preferences, p)
-                if mainpulation_happened:
-                    # TODO: also break from the while loop here
+                manipulation_happened, winner = self.check_if_manipulation_happened(all_prefs, new_preferences, p)
+                if manipulation_happened:
                     break
-        # We exit the while loop  naturally when all relevant cells (resulting from each relevant
-        # alternatives) have been changed and no manipulation happened
-        return mainpulation_happened, winner
+            # We exit the while loop  naturally when all relevant cells (resulting from each relevant
+            # alternatives) have been changed and no manipulation happened
+            new_max_cost_so_far = max([x[0] for x in self.all_generated_matrices])
+            if (new_max_cost_so_far == old_max_cost_so_far) or manipulation_happened:
+                break
+        return manipulation_happened, winner
 
-    def check_if_manipulation_happened(self,
-                                       all_prefs: List[pd.DataFrame],
-                                       new_preferences: List[Tuple[int, list, pd.DataFrame]],
-                                       p: int
-                                       ) -> Tuple[bool, int]:
+    def check_if_manipulation_happened(
+        self, all_prefs: List[pd.DataFrame], new_preferences: List[Tuple[int, list, pd.DataFrame]], p: int
+    ) -> Tuple[bool, int]:
         # TODO: manipulation happened only if satisfies transitivity, include this check as well.
-        mainpulation_happened = False
+        manipulation_happened = False
         winner = None
         for pref_cost, _, pref in new_preferences:
             all_prefs[self.preference_idx] = pref
@@ -226,13 +229,12 @@ class Manipulation:
             #  'get_score_of_alternative_by_voter' function the score the old preference gives and the
             #  one the new pref gives. Substract once for all the alternatives the old scores of the
             #  voter and then add the new ones (for all alternatives) each time you check a preference.
-            winner, *_ = evaluate_profile(all_prefs, self.k, self.method,
-                                          self.alphabetical_order_of_alternatives)
+            winner, *_ = evaluate_profile(all_prefs, self.k, self.method, self.alphabetical_order_of_alternatives)
             if winner == p:
                 print('Manipulation happened!')
-                mainpulation_happened = True
+                manipulation_happened = True
                 break
-        return mainpulation_happened, winner
+        return manipulation_happened, winner
 
     def get_children_generation_options(self, p, parent_mat):
         if check_transitivity(parent_mat[2]):
@@ -240,8 +242,8 @@ class Manipulation:
             index_of_p = p
             index_of_w = self.winner
         else:
-            index_of_p = None if p in parent_mat[1] else p # this means that p is treated like a "newly relevant"
+            index_of_p = None if p in parent_mat[1] else p  # this means that p is treated like a "newly relevant"
             # alternative.
             index_of_w = self.winner if None in parent_mat[1] else self.winner
-            relevant_cells = list(set([p, self.winner] + parent_mat[1])) # this is the union of p,w
+            relevant_cells = list(set([p, self.winner] + parent_mat[1]))  # this is the union of p,w
         return index_of_p, index_of_w, relevant_cells
