@@ -156,6 +156,7 @@ class Manipulation:
                     pass
 
             if p_score == 0 and winner_score == 1:
+                # TODO: develop this (same logic as the case above)
                 raise NotImplementedError('To be implemented')
 
         return None
