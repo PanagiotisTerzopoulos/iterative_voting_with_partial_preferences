@@ -3,7 +3,8 @@ from typing import List, Tuple, Union
 
 import pandas as pd
 
-from iterative_voting.main import find_matrices_with_score, one_cost_children_generation, two_cost_children_generation
+from iterative_voting.main.manipulation_utils import find_matrices_with_score, one_cost_children_generation, \
+    two_cost_children_generation
 from .data_processing import check_transitivity, evaluate_profile, get_score_of_alternative_by_voter, \
     get_winners_from_scores
 
@@ -175,23 +176,13 @@ class Manipulation:
         return None
 
     def tree_generation_level_1_onwards(self, all_prefs, p):
-        manipulation_happened = False
-        winner = None
         while True:
             old_max_cost_so_far = max([x[0] for x in self.all_generated_matrices])
             matrices_to_examine_cost_1 = find_matrices_with_score(self.all_generated_matrices, old_max_cost_so_far)
             matrices_to_examine_cost_2 = find_matrices_with_score(self.all_generated_matrices, old_max_cost_so_far - 1)
-            for (parent_mat_1, parent_mat_2) in zip(matrices_to_examine_cost_1, matrices_to_examine_cost_2):
-                index_of_p, index_of_w, relevant_cells = self.get_children_generation_options(p, parent_mat_1)
-                new_preferences = one_cost_children_generation(
-                    parent_matrix=parent_mat_1[2],
-                    cost_of_parent_matrix=old_max_cost_so_far,
-                    alternatives_of_interest=relevant_cells,
-                    index_of_p=index_of_p,
-                    index_of_w=index_of_w,
-                    rule=self.method,
-                    matrices_not_to_generate=[x[2] for x in self.all_generated_matrices]
-                )
+
+            new_preferences = []
+            for parent_mat_2 in matrices_to_examine_cost_2:
                 index_of_p, index_of_w, relevant_cells = self.get_children_generation_options(p, parent_mat_2)
                 new_preferences += two_cost_children_generation(
                     parent_matrix=parent_mat_2[2],
@@ -202,35 +193,48 @@ class Manipulation:
                     rule=self.method,
                     matrices_not_to_generate=[x[2] for x in self.all_generated_matrices]
                 )
-                if not new_preferences:  # we exhausted the level cause new_preferences is an empty list
-                    break
-                self.all_generated_matrices += new_preferences
+            manipulation_happened, winner = self.check_if_manipulation_happened(all_prefs, new_preferences, p)
+            if manipulation_happened:
+                break
 
-                manipulation_happened, winner = self.check_if_manipulation_happened(all_prefs, new_preferences, p)
-                if manipulation_happened:
-                    break
+            new_preferences = []
+            for parent_mat_1 in matrices_to_examine_cost_1:
+                index_of_p, index_of_w, relevant_cells = self.get_children_generation_options(p, parent_mat_1)
+                new_preferences += one_cost_children_generation(
+                    parent_matrix=parent_mat_1[2],
+                    cost_of_parent_matrix=old_max_cost_so_far,
+                    alternatives_of_interest=relevant_cells,
+                    index_of_p=index_of_p,
+                    index_of_w=index_of_w,
+                    rule=self.method,
+                    matrices_not_to_generate=[x[2] for x in self.all_generated_matrices]
+                )
+            manipulation_happened, winner = self.check_if_manipulation_happened(all_prefs, new_preferences, p)
+            if manipulation_happened:
+                break
+
+            self.all_generated_matrices += new_preferences
             # We exit the while loop  naturally when all relevant cells (resulting from each relevant
             # alternatives) have been changed and no manipulation happened
             new_max_cost_so_far = max([x[0] for x in self.all_generated_matrices])
-            if (new_max_cost_so_far == old_max_cost_so_far) or manipulation_happened:
+            if new_max_cost_so_far == old_max_cost_so_far:
                 break
         return manipulation_happened, winner
 
     def check_if_manipulation_happened(
         self, all_prefs: List[pd.DataFrame], new_preferences: List[Tuple[int, list, pd.DataFrame]], p: int
     ) -> Tuple[bool, int]:
-        # TODO: manipulation happened only if satisfies transitivity, include this check as well.
         manipulation_happened = False
         winner = None
         for pref_cost, _, pref in new_preferences:
             all_prefs[self.preference_idx] = pref
-            # TODO: make this code more efficient. we don't need to evaluate the whole profile every
+            # TODO: NB: make this code more efficient. we don't need to evaluate the whole profile every
             #  time. we have the scores of alternatives dictionary and we can calculate with the
             #  'get_score_of_alternative_by_voter' function the score the old preference gives and the
             #  one the new pref gives. Substract once for all the alternatives the old scores of the
             #  voter and then add the new ones (for all alternatives) each time you check a preference.
             winner, *_ = evaluate_profile(all_prefs, self.k, self.method, self.alphabetical_order_of_alternatives)
-            if winner == p:
+            if winner == p and check_transitivity(pref):
                 print('Manipulation happened!')
                 manipulation_happened = True
                 break
