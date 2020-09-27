@@ -66,6 +66,7 @@ def profile_generation(m,n, method):
 
     return gprofile
 
+
 my_data = []
 
 for k in range(100):
@@ -73,6 +74,9 @@ for k in range(100):
 
 with open("C:/Users/Zoi/Documents/GitHub/iterative_voting/main/my_uniform_data.pkl", 'wb') as f:
     dill.dump(my_data, f)
+    
+
+
 
 
 
