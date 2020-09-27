@@ -153,7 +153,7 @@ class Manipulation:
                         continue_with_next_alternative = True
                         break
                     else:
-                        # check whether p would win if possible_winner had score 0
+                        # check whether p would win if possible_winner (say x) had score 0
                         scores_of_alternatives[str(possible_winners[-1])] -= 1
                         possible_winner = get_winners_from_scores(scores_of_alternatives, self.alphabetical_order)[0]
                         if possible_winner == possible_winners[-1]:
