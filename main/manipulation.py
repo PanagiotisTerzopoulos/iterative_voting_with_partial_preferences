@@ -95,6 +95,8 @@ class Manipulation:
         Returns:
             None if Manipulation cannot happen or the new profile and the the winner in a tuple if manipulation happens.
         """
+        # TODO: make sure this returns the actual new profile when manipulation happens. Cause "all_prefs" seems to
+        #  remain the old profile.
         sorted_alternatives = self.get_alternatives_order(self.possible_winners)
         winner_score = get_score_of_alternative_by_voter(self.preference, self.method, self.k, self.winner)
         for p in sorted_alternatives:
@@ -109,31 +111,8 @@ class Manipulation:
                 scores_of_alternatives[str(p)] += 1
                 would_win = get_winners_from_scores(scores_of_alternatives, self.alphabetical_order)[0] == p
                 if would_win:
-                    print(
-                        f'Alternative {p} is preferred and would win if given greater score. Investigating possible '
-                        f'manipulation.'
-                    )
-                    all_prefs = copy.deepcopy(self.all_preferences)
+                    all_prefs, manipulation_happened, winner = self.tree_generation(p)
 
-                    # first generate all the 1-cost children of the original matrix
-                    new_preferences = one_cost_children_generation(
-                        parent_matrix=self.preference,
-                        cost_of_parent_matrix=self.absolute_cost_of_preference,
-                        alternatives_of_interest=[p, self.winner],
-                        index_of_p=p,
-                        index_of_w=self.winner,
-                        rule=self.method
-                    )
-                    self.all_generated_matrices += new_preferences
-
-                    manipulation_happened, winner = self.check_if_manipulation_happened(all_prefs, new_preferences, p)
-                    if manipulation_happened:
-                        return all_prefs, winner
-
-                    # since the direct one-cost children of the original didn't work, for every child generate the
-                    # 1-cost children and the 2-cost children from the previous matrix.
-
-                    manipulation_happened, winner = self.tree_generation_level_1_onwards(all_prefs, p)
                     if manipulation_happened:
                         return all_prefs, winner
                 else:
@@ -166,14 +145,40 @@ class Manipulation:
                 if continue_with_next_alternative:
                     continue
                 else:
-                    # that means that possible_winner == p
-                    # TODO: tree-generation code here
+                    '''
+                    that means that possible_winner == p. the alternatives of interest here are all possible_winners:
+                    "note that the relevant cells, besides the alternative w, will also concern all other 
+                    alternatives that have to have their scores lowered"
+                    '''
+                    all_prefs, manipulation_happened, winner = self.tree_generation(p)
+                    if manipulation_happened:
+                        return all_prefs, winner
                     pass
 
             if p_score == 0 and winner_score == 1:
                 raise NotImplementedError('To be implemented')
 
         return None
+
+    def tree_generation(self, p):
+        print(f'Alternative {p} is preferred. Investigating possible manipulation.')
+        all_prefs = copy.deepcopy(self.all_preferences)
+        # first generate all the 1-cost children of the original matrix
+        new_preferences = one_cost_children_generation(
+            parent_matrix=self.preference,
+            cost_of_parent_matrix=self.absolute_cost_of_preference,
+            alternatives_of_interest=[p, self.winner],
+            index_of_p=p,
+            index_of_w=self.winner,
+            rule=self.method
+        )
+        self.all_generated_matrices += new_preferences
+        manipulation_happened, winner = self.check_if_manipulation_happened(all_prefs, new_preferences, p)
+        if not manipulation_happened:
+            # since the direct one-cost children of the original didn't work, for every child generate the
+            # 1-cost children and the 2-cost children from the previous matrix.
+            manipulation_happened, winner = self.tree_generation_level_1_onwards(all_prefs, p)
+        return all_prefs, manipulation_happened, winner
 
     def tree_generation_level_1_onwards(self, all_prefs, p):
         while True:
