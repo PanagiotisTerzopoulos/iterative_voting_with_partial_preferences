@@ -162,6 +162,25 @@ class Manipulation:
         return None
 
     def tree_generation(self, p):
+        """
+        Given an alternative p that is a possible winner and is preferred by our voter to the current winner, we want
+        to check whether the voter can make p win. In order to do this, we generate matrices that differ from the
+        original matrix (i.e., the current preference of the voter) in rounds:
+        (the intuition we have is a tree-shape, where each level consists of matrices of the same cost).
+        we start from those that have cost 1,
+        we continue to those that have cost 2, and so on. After we check all matrices that have the same cost and we
+        know that none of them is transitive and makes p win, we procced to the next round and generate matrices that
+        have further differences with the original one. The key idea is that we don't need to make all possible changes,
+        but only those that are "useful"---those that concern the current winner and the possible winner p (and
+        potentially some other alternatives that need to have their scores changed too). We distinguish between
+        transitive matrices, in which only useful changes need to be considered in future levels of the tree,
+        and non-transitive matrices, in which some more alternatives become relevant because changes that concern them
+        may induce a transitive matrix that makes p win in following levels.
+
+        Returns:
+        ???
+
+        """
         print(f'Alternative {p} is preferred. Investigating possible manipulation.')
         all_prefs = copy.deepcopy(self.all_preferences)
         # first generate all the 1-cost children of the original matrix
@@ -182,6 +201,9 @@ class Manipulation:
         return all_prefs, manipulation_happened, winner
 
     def tree_generation_level_1_onwards(self, all_prefs, p):
+        """
+
+        """
         while True:
             old_max_cost_so_far = max([x[0] for x in self.all_generated_matrices])
             matrices_to_examine_cost_1 = find_matrices_with_score(self.all_generated_matrices, old_max_cost_so_far)
@@ -230,6 +252,9 @@ class Manipulation:
     def check_if_manipulation_happened(
         self, all_prefs: List[pd.DataFrame], new_preferences: List[Tuple[int, list, pd.DataFrame]], p: int
     ) -> Tuple[bool, int]:
+        """
+
+        """
         manipulation_happened = False
         winner = None
         for pref_cost, _, pref in new_preferences:
@@ -247,6 +272,12 @@ class Manipulation:
         return manipulation_happened, winner
 
     def get_children_generation_options(self, p, parent_mat):
+        """
+        takes as input a possible winner p and a given matrix (preference)
+
+        Returns:
+        the index of p and of w in the given matrix, and all relevant cells in that matrix
+        """
         if check_transitivity(parent_mat[2]):
             relevant_cells = [p, self.winner]
             index_of_p = p
