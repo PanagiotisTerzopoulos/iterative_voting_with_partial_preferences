@@ -1,7 +1,6 @@
 import math
 from typing import List
 
-import dill
 import numpy as np
 import pandas as pd
 
@@ -82,5 +81,5 @@ def profile_generation(alt_number: int, vot_number: int, method: str) -> List[np
 
 ### here is how to save this profile in a separate file (for Zoi's local path):
 
-#with open("C:/Users/Zoi/Documents/GitHub/iterative_voting/main/one_piece_of_data.pkl", 'wb') as f:
-  #  dill.dump(one_piece_of_data, f)
+# with open("C:/Users/Zoi/Documents/GitHub/iterative_voting/main/one_piece_of_data.pkl", 'wb') as f:
+#  dill.dump(one_piece_of_data, f)
