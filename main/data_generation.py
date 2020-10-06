@@ -1,4 +1,5 @@
 import math
+from typing import List
 
 import dill
 import numpy as np
@@ -7,7 +8,7 @@ import pandas as pd
 from iterative_voting.main.data_processing import check_transitivity
 
 
-def fix_symmetry_diagonal(pref: array) -> array:
+def fix_symmetry_diagonal(pref: np.array) -> np.array:
     """
         Takes as input a random array and modifies it so that it is symmetric
         (actually symmetric cells should have opposite values) and is has zeros in the diagonal.
@@ -23,7 +24,7 @@ def fix_symmetry_diagonal(pref: array) -> array:
     return pref
 
 
-def profile_generation(alt_number: int, vot_number: int, method: str) -> LIst[np.array]:
+def profile_generation(alt_number: int, vot_number: int, method: str) -> List[np.array]:
     """
         Inputs:
          alt_number: the number of alternatives
@@ -55,7 +56,7 @@ def profile_generation(alt_number: int, vot_number: int, method: str) -> LIst[np
             pref_1 = fix_symmetry_diagonal(random_pref_1)
 
         random_pref_2 = np.random.randint(-1, 2, (alt_number, alt_number))
-        pref_2 = fix(random_pref_2)
+        pref_2 = fix_symmetry_diagonal(random_pref_2)
         while pref_1 is pref_2 or check_transitivity(pd.DataFrame(pref_2)) == False:
             random_pref_2 = np.random.randint(-1, 2, (alt_number, alt_number))
             pref_2 = fix_symmetry_diagonal(random_pref_2)
@@ -67,7 +68,7 @@ def profile_generation(alt_number: int, vot_number: int, method: str) -> LIst[np
         for i in range(vot_number - 2 * math.floor(vot_number * (1 / 3))):
             random_pref = np.random.randint(-1, 2, (alt_number, alt_number))
             some_pref = fix_symmetry_diagonal(random_pref)
-            while check_transitivity(some_pref) == False:
+            while not check_transitivity(some_pref):
                 random_pref = np.random.randint(-1, 2, (alt_number, alt_number))
                 some_pref = fix_symmetry_diagonal(random_pref)
             gprofile.append(some_pref)
@@ -77,9 +78,9 @@ def profile_generation(alt_number: int, vot_number: int, method: str) -> LIst[np
 
 # the following is an example profile for 4 alternatives and 10 voters
 
-one_piece_of_data = [profile_generation(4, 10, 'ic')]
+# one_piece_of_data = [profile_generation(4, 10, 'ic')]
 
 ### here is how to save this profile in a separate file (for Zoi's local path):
 
-with open("C:/Users/Zoi/Documents/GitHub/iterative_voting/main/one_piece_of_data.pkl", 'wb') as f:
-    dill.dump(one_piece_of_data, f)
+#with open("C:/Users/Zoi/Documents/GitHub/iterative_voting/main/one_piece_of_data.pkl", 'wb') as f:
+  #  dill.dump(one_piece_of_data, f)
