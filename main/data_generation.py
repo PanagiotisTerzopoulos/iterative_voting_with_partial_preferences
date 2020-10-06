@@ -47,7 +47,7 @@ def profile_generation(alt_number: int,vot_number:int, method:str) -> LIst[np.ar
     elif method == '2urn':
 
         random_pref_1 = np.random.randint(-1, 2, (alt_number, alt_number))
-        pref_1 = fix(random_pref_1)
+        pref_1 = fix_symmetry_diagonal(random_pref_1)
         while check_transitivity(pd.DataFrame(pref_1)) == False:
             random_pref_1 = np.random.randint(-1, 2, (alt_number, alt_number))
             pref_1 = fix_symmetry_diagonal(random_pref_1)
