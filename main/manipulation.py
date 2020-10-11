@@ -95,8 +95,6 @@ class Manipulation:
         Returns:
             None if Manipulation cannot happen or the new profile and the the winner in a tuple if manipulation happens.
         """
-        # TODO: make sure this returns the actual new profile when manipulation happens. Cause "all_prefs" seems to
-        #  remain the old profile.
         sorted_alternatives = self.get_alternatives_order(self.possible_winners)
         winner_score = get_score_of_alternative_by_voter(self.preference, self.method, self.k, self.winner)
         for p in sorted_alternatives:
@@ -156,8 +154,43 @@ class Manipulation:
                     pass
 
             if p_score == 0 and winner_score == 1:
-                # TODO: develop this (same logic as the case above)
-                raise NotImplementedError('To be implemented')
+                # The lofic of this section is the same as above
+                # check whether p would win if winner had score 0
+                scores_of_alternatives = copy.deepcopy(self.scores_of_alternatives)
+                scores_of_alternatives[str(self.winner)] -= 1
+                scores_of_alternatives[str(p)] += 1
+                possible_winners = [get_winners_from_scores(scores_of_alternatives, self.alphabetical_order)[0]]
+
+                continue_with_next_alternative = False
+                while possible_winners[-1] != p:
+                    if get_score_of_alternative_by_voter(
+                        self.preference, self.method, self.k, possible_winners[-1]
+                    ) == 0:
+                        continue_with_next_alternative = True
+                        break
+                    else:
+                        # check whether p would win if possible_winner (say x) had score 0
+                        scores_of_alternatives[str(possible_winners[-1])] -= 1
+                        possible_winner = get_winners_from_scores(scores_of_alternatives, self.alphabetical_order)[0]
+                        if possible_winner == possible_winners[-1]:
+                            # no new winners are found
+                            continue_with_next_alternative = True
+                            break
+                        else:
+                            possible_winners.append(possible_winner)
+
+                if continue_with_next_alternative:
+                    continue
+                else:
+                    '''
+                    that means that possible_winner == p. the alternatives of interest here are all possible_winners:
+                    "note that the relevant cells, besides the alternative w, will also concern all other 
+                    alternatives that have to have their scores lowered"
+                    '''
+                    all_prefs, manipulation_happened, winner = self.tree_generation(p)
+                    if manipulation_happened:
+                        return all_prefs, winner
+                    pass
 
         return None
 
@@ -193,11 +226,11 @@ class Manipulation:
             rule=self.method
         )
         self.all_generated_matrices += new_preferences
-        manipulation_happened, winner = self.check_if_manipulation_happened(all_prefs, new_preferences, p)
+        all_prefs, manipulation_happened, winner = self.check_if_manipulation_happened(all_prefs, new_preferences, p)
         if not manipulation_happened:
             # since the direct one-cost children of the original didn't work, for every child generate the
             # 1-cost children and the 2-cost children from the previous matrix.
-            manipulation_happened, winner = self.tree_generation_level_1_onwards(all_prefs, p)
+            all_prefs, manipulation_happened, winner = self.tree_generation_level_1_onwards(all_prefs, p)
         return all_prefs, manipulation_happened, winner
 
     def tree_generation_level_1_onwards(self, all_prefs, p):
@@ -221,7 +254,9 @@ class Manipulation:
                     rule=self.method,
                     matrices_not_to_generate=[x[2] for x in self.all_generated_matrices]
                 )
-            manipulation_happened, winner = self.check_if_manipulation_happened(all_prefs, new_preferences, p)
+            all_prefs, manipulation_happened, winner = self.check_if_manipulation_happened(
+                all_prefs, new_preferences, p
+            )
             if manipulation_happened:
                 break
 
@@ -237,7 +272,9 @@ class Manipulation:
                     rule=self.method,
                     matrices_not_to_generate=[x[2] for x in self.all_generated_matrices]
                 )
-            manipulation_happened, winner = self.check_if_manipulation_happened(all_prefs, new_preferences, p)
+            all_prefs, manipulation_happened, winner = self.check_if_manipulation_happened(
+                all_prefs, new_preferences, p
+            )
             if manipulation_happened:
                 break
 
@@ -247,11 +284,11 @@ class Manipulation:
             new_max_cost_so_far = max([x[0] for x in self.all_generated_matrices])
             if new_max_cost_so_far == old_max_cost_so_far:
                 break
-        return manipulation_happened, winner
+        return all_prefs, manipulation_happened, winner
 
     def check_if_manipulation_happened(
         self, all_prefs: List[pd.DataFrame], new_preferences: List[Tuple[int, list, pd.DataFrame]], p: int
-    ) -> Tuple[bool, int]:
+    ) -> Tuple[List[pd.DataFrame], bool, int]:
         """
 
         """
@@ -269,7 +306,7 @@ class Manipulation:
                 print('Manipulation happened!')
                 manipulation_happened = True
                 break
-        return manipulation_happened, winner
+        return all_prefs, manipulation_happened, winner
 
     def get_children_generation_options(self, p, parent_mat):
         """
