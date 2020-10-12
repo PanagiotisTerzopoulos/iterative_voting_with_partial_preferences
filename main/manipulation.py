@@ -2,6 +2,12 @@ import copy
 from typing import List, Tuple, Union
 
 import pandas as pd
+import os
+
+import sys
+curr_path = os.path.realpath(__file__)
+if curr_path.split('/iterative_voting/main')[0] not in sys.path:
+    sys.path.append(curr_path.split('/iterative_voting/main')[0])
 
 from iterative_voting.main.manipulation_utils import find_matrices_with_score, one_cost_children_generation, \
     two_cost_children_generation
@@ -35,10 +41,9 @@ class Manipulation:
         winner: int,
         possible_winners: List[int],
         scores_of_alternatives: dict,
-        alphabetical_order: dict,
+        alphabetical_order_of_alternatives: dict,
         method: str,
-        k: int,
-        alphabetical_order_of_alternatives: dict
+        k: int
     ):
 
         self.all_preferences = all_preferences  # These are the preferences of all the voters in a list
@@ -49,7 +54,6 @@ class Manipulation:
         self.possible_winners = possible_winners
         self.scores_of_alternatives = scores_of_alternatives  # The total scores of the alternatives in the profile,
         # not the voter specific scores.
-        self.alphabetical_order = alphabetical_order
         self.method = method
         self.k = k
         self.alphabetical_order_of_alternatives = alphabetical_order_of_alternatives
@@ -107,7 +111,8 @@ class Manipulation:
                 scores_of_alternatives = copy.deepcopy(self.scores_of_alternatives)
                 # check whether p would win with score 1
                 scores_of_alternatives[str(p)] += 1
-                would_win = get_winners_from_scores(scores_of_alternatives, self.alphabetical_order)[0] == p
+                would_win = get_winners_from_scores(scores_of_alternatives,
+                                                    self.alphabetical_order_of_alternatives)[0] == p
                 if would_win:
                     all_prefs, manipulation_happened, winner = self.tree_generation(p)
 
@@ -120,7 +125,9 @@ class Manipulation:
                 # check whether p would win if winner had score 0
                 scores_of_alternatives = copy.deepcopy(self.scores_of_alternatives)
                 scores_of_alternatives[str(self.winner)] -= 1
-                possible_winners = [get_winners_from_scores(scores_of_alternatives, self.alphabetical_order)[0]]
+                possible_winners = [
+                    get_winners_from_scores(scores_of_alternatives, self.alphabetical_order_of_alternatives)[0]
+                ]
 
                 continue_with_next_alternative = False
                 while possible_winners[-1] != p:
@@ -132,7 +139,9 @@ class Manipulation:
                     else:
                         # check whether p would win if possible_winner (say x) had score 0
                         scores_of_alternatives[str(possible_winners[-1])] -= 1
-                        possible_winner = get_winners_from_scores(scores_of_alternatives, self.alphabetical_order)[0]
+                        possible_winner = get_winners_from_scores(
+                            scores_of_alternatives, self.alphabetical_order_of_alternatives
+                        )[0]
                         if possible_winner == possible_winners[-1]:
                             # no new winners are found
                             continue_with_next_alternative = True
@@ -159,7 +168,9 @@ class Manipulation:
                 scores_of_alternatives = copy.deepcopy(self.scores_of_alternatives)
                 scores_of_alternatives[str(self.winner)] -= 1
                 scores_of_alternatives[str(p)] += 1
-                possible_winners = [get_winners_from_scores(scores_of_alternatives, self.alphabetical_order)[0]]
+                possible_winners = [
+                    get_winners_from_scores(scores_of_alternatives, self.alphabetical_order_of_alternatives)[0]
+                ]
 
                 continue_with_next_alternative = False
                 while possible_winners[-1] != p:
@@ -171,7 +182,9 @@ class Manipulation:
                     else:
                         # check whether p would win if possible_winner (say x) had score 0
                         scores_of_alternatives[str(possible_winners[-1])] -= 1
-                        possible_winner = get_winners_from_scores(scores_of_alternatives, self.alphabetical_order)[0]
+                        possible_winner = get_winners_from_scores(
+                            scores_of_alternatives, self.alphabetical_order_of_alternatives
+                        )[0]
                         if possible_winner == possible_winners[-1]:
                             # no new winners are found
                             continue_with_next_alternative = True
