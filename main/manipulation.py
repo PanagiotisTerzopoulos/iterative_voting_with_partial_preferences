@@ -37,6 +37,7 @@ class Manipulation:
         all_preferences: List[pd.DataFrame],
         preference_idx: int,  # The index for the 'all_preferences' list that corresponds to the preference of the
         # specific voter.
+        truthful_profile: List[pd.DataFrame],
         absolute_cost_of_preference: int,
         winner: int,
         possible_winners: List[int],
@@ -46,9 +47,11 @@ class Manipulation:
         k: int
     ):
 
-        self.all_preferences = all_preferences  # These are the preferences of all the voters in a list
+        self.all_preferences = all_preferences  # These are the preferences of all the voters in a list,
+        # in the beginning of the current manipulation round.
         self.preference_idx = preference_idx
         self.preference = all_preferences[preference_idx]  # The preference of the specific voter.
+        self.truthful_profile = truthful_profile  # This is the original profile, before any manipulation of any voter.
         self.absolute_cost_of_preference = absolute_cost_of_preference
         self.winner = winner
         self.possible_winners = possible_winners
@@ -99,13 +102,18 @@ class Manipulation:
         Returns:
             None if Manipulation cannot happen or the new profile and the the winner in a tuple if manipulation happens.
         """
-        sorted_alternatives = self.get_alternatives_order(self.possible_winners)
+        # alternatives_to_check are all the possible winners that the current voter truthfully prefers to the profile
+        # winner (self.w)
+        alternatives_to_check = [
+            x for x in self.possible_winners if self.truthful_profile[self.preference_idx].loc[x, self.winner] == 1
+        ]
+        sorted_alternatives = self.get_alternatives_order(alternatives_to_check)
         winner_score = get_score_of_alternative_by_voter(self.preference, self.method, self.k, self.winner)
         for p in sorted_alternatives:
             p_score = get_score_of_alternative_by_voter(self.preference, self.method, self.k, p)
 
             if p_score == 1 and winner_score == 0:
-                return None
+                continue
 
             if p_score == 0 and winner_score == 0:
                 scores_of_alternatives = copy.deepcopy(self.scores_of_alternatives)
