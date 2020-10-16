@@ -1,10 +1,10 @@
 import copy
+import os
+import sys
 from typing import List, Tuple, Union
 
 import pandas as pd
-import os
 
-import sys
 curr_path = os.path.realpath(__file__)
 if curr_path.split('/iterative_voting/main')[0] not in sys.path:
     sys.path.append(curr_path.split('/iterative_voting/main')[0])
@@ -257,7 +257,9 @@ class Manipulation:
 
             new_preferences = []
             for parent_mat_2 in matrices_to_examine_cost_2:
-                index_of_p, index_of_w, relevant_cells = self.get_children_generation_options(p, parent_mat_2)
+                index_of_p, index_of_w, relevant_cells = self.get_children_generation_options(
+                    self.winner, p, parent_mat_2
+                )
                 new_preferences += two_cost_children_generation(
                     parent_matrix=parent_mat_2[2],
                     cost_of_parent_matrix=old_max_cost_so_far - 1,
@@ -275,7 +277,9 @@ class Manipulation:
 
             new_preferences = []
             for parent_mat_1 in matrices_to_examine_cost_1:
-                index_of_p, index_of_w, relevant_cells = self.get_children_generation_options(p, parent_mat_1)
+                index_of_p, index_of_w, relevant_cells = self.get_children_generation_options(
+                    self.winner, p, parent_mat_1
+                )
                 new_preferences += one_cost_children_generation(
                     parent_matrix=parent_mat_1[2],
                     cost_of_parent_matrix=old_max_cost_so_far,
@@ -320,21 +324,3 @@ class Manipulation:
                 manipulation_happened = True
                 break
         return all_prefs, manipulation_happened, winner
-
-    def get_children_generation_options(self, p, parent_mat):
-        """
-        takes as input a possible winner p and a given matrix (preference)
-
-        Returns:
-        the index of p and of w in the given matrix, and all relevant cells in that matrix
-        """
-        if check_transitivity(parent_mat[2]):
-            relevant_cells = [p, self.winner]
-            index_of_p = p
-            index_of_w = self.winner
-        else:
-            index_of_p = None if p in parent_mat[1] else p  # this means that p is treated like a "newly relevant"
-            # alternative.
-            index_of_w = self.winner if None in parent_mat[1] else self.winner
-            relevant_cells = list(set([p, self.winner] + parent_mat[1]))  # this is the union of p,w
-        return index_of_p, index_of_w, relevant_cells

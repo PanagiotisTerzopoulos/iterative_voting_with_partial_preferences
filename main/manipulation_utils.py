@@ -3,6 +3,8 @@ from typing import List, Tuple, Union
 
 import pandas as pd
 
+from iterative_voting.main.data_processing import check_transitivity
+
 
 def useful_change(parent_matrix: pd.DataFrame, index: int, type_of_alternative: str, rule: str,
                   cost: int) -> Union[List[pd.DataFrame], None]:
@@ -233,3 +235,25 @@ def find_matrices_with_score(matrices: List[Tuple[int, list, pd.DataFrame]],
         score: Returns matrices with this score.
     """
     return [x for x in matrices if x[0] == score]
+
+
+def get_children_generation_options(w: int, p: int, parent_mat: Tuple[int, list, pd.DataFrame]):
+    """
+
+    Args:
+        w: winner
+        p: possible_winner
+        parent_mat: (cost-label_of_child, indices_changed_from_the_parent, child)
+    Returns:
+    the index of p and of w in the given matrix, and all relevant cells in that matrix
+    """
+    if check_transitivity(parent_mat[2]):
+        relevant_cells = [p, w]
+        index_of_p = p
+        index_of_w = w
+    else:
+        index_of_p = None if p in parent_mat[1] else p  # this means that p is treated like a "newly relevant"
+        # alternative.
+        index_of_w = None if w in parent_mat[1] else w
+        relevant_cells = list(set([p, w] + parent_mat[1]))  # this is the union of p,w
+    return index_of_p, index_of_w, relevant_cells
