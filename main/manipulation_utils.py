@@ -6,7 +6,7 @@ import pandas as pd
 from iterative_voting.main.data_processing import check_transitivity
 
 
-def useful_change(parent_matrix: pd.DataFrame, index: int, type_of_alternative: str, rule: str,
+def useful_change(parent_matrix: pd.DataFrame, index: int, col: int, type_of_alternative: str, rule: str,
                   cost: int) -> Union[List[pd.DataFrame], None]:
     """
     Gets a parent matrix and creates its child for the case of the relevant change concerning either the possible
@@ -14,6 +14,7 @@ def useful_change(parent_matrix: pd.DataFrame, index: int, type_of_alternative: 
     Args:
         parent_matrix: The matrix to change
         index: The index of the dataframe that corresponds to the row of either p or w.
+        col: The column we are at when this function is called.
         type_of_alternative: Either 'p' or 'w'
         rule: Either 'approval' or 'veto'. This is needed cause the useful change is different in its case.
         cost: Either do the one cost change or do the two cost change. Should be either 1 or 2.
@@ -29,47 +30,42 @@ def useful_change(parent_matrix: pd.DataFrame, index: int, type_of_alternative: 
 
     if rule == 'approval':
         if type_of_alternative == 'p':
-            for col in parent_matrix.columns:
-                new_matrix = copy.copy(parent_matrix)
-                if parent_matrix.loc[index, col] == -1:
-                    if cost == 1:
-                        new_matrix.loc[index, col] = 0
-                        new_matrix.loc[col, index] = 0  # symmetry constraint
-                        new_matrices.append(new_matrix)
-                    else:
-                        new_matrix.loc[index, col] = 1
-                        new_matrix.loc[col, index] = -1  # symmetry constraint
-                        new_matrices.append(new_matrix)
-        else:
-            for col in parent_matrix.columns:
-                new_matrix = copy.copy(parent_matrix)
-                if (parent_matrix.loc[index, col] == 0 and
-                    cost == 1) or (parent_matrix.loc[index, col] == 1 and cost == 2):
-                    new_matrix.loc[index, col] = -1
-                    new_matrix.loc[col, index] = 1  # symmetry constraint
+            new_matrix = copy.copy(parent_matrix)
+            if parent_matrix.loc[index, col] == -1:
+                if cost == 1:
+                    new_matrix.loc[index, col] = 0
+                    new_matrix.loc[col, index] = 0  # symmetry constraint
                     new_matrices.append(new_matrix)
-
-    else:
-        if type_of_alternative == 'p':
-            for col in parent_matrix.columns:
-                new_matrix = copy.copy(parent_matrix)
-                if (parent_matrix.loc[index, col] == 0 and
-                    cost == 1) or (parent_matrix.loc[index, col] == -1 and cost == 2):
+                else:
                     new_matrix.loc[index, col] = 1
                     new_matrix.loc[col, index] = -1  # symmetry constraint
                     new_matrices.append(new_matrix)
         else:
-            for col in parent_matrix.columns:
-                new_matrix = copy.copy(parent_matrix)
-                if parent_matrix.loc[index, col] == 1:
-                    if cost == 1:
-                        new_matrix.loc[index, col] = 0
-                        new_matrix.loc[col, index] = 0  # symmetry constraint
-                        new_matrices.append(new_matrix)
-                    else:
-                        new_matrix.loc[index, col] = -1
-                        new_matrix.loc[col, index] = 1  # symmetry constraint
-                        new_matrices.append(new_matrix)
+            new_matrix = copy.copy(parent_matrix)
+            if (parent_matrix.loc[index, col] == 0 and cost == 1) or (parent_matrix.loc[index, col] == 1 and cost == 2):
+                new_matrix.loc[index, col] = -1
+                new_matrix.loc[col, index] = 1  # symmetry constraint
+                new_matrices.append(new_matrix)
+
+    else:
+        if type_of_alternative == 'p':
+            new_matrix = copy.copy(parent_matrix)
+            if (parent_matrix.loc[index, col] == 0 and
+                cost == 1) or (parent_matrix.loc[index, col] == -1 and cost == 2):
+                new_matrix.loc[index, col] = 1
+                new_matrix.loc[col, index] = -1  # symmetry constraint
+                new_matrices.append(new_matrix)
+        else:
+            new_matrix = copy.copy(parent_matrix)
+            if parent_matrix.loc[index, col] == 1:
+                if cost == 1:
+                    new_matrix.loc[index, col] = 0
+                    new_matrix.loc[col, index] = 0  # symmetry constraint
+                    new_matrices.append(new_matrix)
+                else:
+                    new_matrix.loc[index, col] = -1
+                    new_matrix.loc[col, index] = 1  # symmetry constraint
+                    new_matrices.append(new_matrix)
 
     return new_matrices
 
@@ -116,7 +112,8 @@ def one_cost_children_generation(
             if rel and row != col:
                 if row == index_of_p:
                     new_matrices = useful_change(
-                        parent_matrix=parent_matrix, index=index_of_p, type_of_alternative='p', rule=rule, cost=1
+                        parent_matrix=parent_matrix, index=index_of_p, col=col, type_of_alternative='p', rule=rule, \
+                                                                                                             cost=1
                     )
                     if new_matrices:
                         children_matrices += [
@@ -124,7 +121,12 @@ def one_cost_children_generation(
                         ]
                 elif row == index_of_w:
                     new_matrices = useful_change(
-                        parent_matrix=parent_matrix, index=index_of_w, type_of_alternative='w', rule=rule, cost=1
+                        parent_matrix=parent_matrix,
+                        index=index_of_w,
+                        col=col,
+                        type_of_alternative='w',
+                        rule=rule,
+                        cost=1
                     )
                     if new_matrices:
                         children_matrices += [
@@ -197,7 +199,12 @@ def two_cost_children_generation(
             if rel and row != col:
                 if row == index_of_p:
                     new_matrices = useful_change(
-                        parent_matrix=parent_matrix, index=index_of_p, type_of_alternative='p', rule=rule, cost=2
+                        parent_matrix=parent_matrix,
+                        index=index_of_p,
+                        col=col,
+                        type_of_alternative='p',
+                        rule=rule,
+                        cost=2
                     )
                     if new_matrices:
                         children_matrices += [
@@ -205,7 +212,12 @@ def two_cost_children_generation(
                         ]
                 elif row == index_of_w:
                     new_matrices = useful_change(
-                        parent_matrix=parent_matrix, index=index_of_w, type_of_alternative='w', rule=rule, cost=2
+                        parent_matrix=parent_matrix,
+                        index=index_of_w,
+                        col=col,
+                        type_of_alternative='w',
+                        rule=rule,
+                        cost=2
                     )
                     if new_matrices:
                         children_matrices += [

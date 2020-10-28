@@ -9,7 +9,8 @@ curr_path = os.path.realpath(__file__)
 if curr_path.split('/iterative_voting/main')[0] not in sys.path:
     sys.path.append(curr_path.split('/iterative_voting/main')[0])
 
-from iterative_voting.main.manipulation_utils import find_matrices_with_score, one_cost_children_generation, \
+from iterative_voting.main.manipulation_utils import find_matrices_with_score, get_children_generation_options, \
+    one_cost_children_generation, \
     two_cost_children_generation
 from .data_processing import check_transitivity, evaluate_profile, get_score_of_alternative_by_voter, \
     get_winners_from_scores
@@ -81,7 +82,7 @@ class Manipulation:
         alternative to the least preferred one according to the preference of the voter.
         """
         sorted_alternatives = []
-        pref = self.preference.loc[alternatives, alternatives]
+        pref = self.truthful_profile[self.preference_idx].loc[alternatives, alternatives]
         while True:
             top_ones = pref[pref.apply(lambda row: -1 not in row.values, axis=1)].index.values
             if top_ones.size > 0:
@@ -136,7 +137,6 @@ class Manipulation:
                 possible_winners = [
                     get_winners_from_scores(scores_of_alternatives, self.alphabetical_order_of_alternatives)[0]
                 ]
-
                 continue_with_next_alternative = False
                 while possible_winners[-1] != p:
                     if get_score_of_alternative_by_voter(
@@ -265,9 +265,7 @@ class Manipulation:
 
             new_preferences = []
             for parent_mat_2 in matrices_to_examine_cost_2:
-                index_of_p, index_of_w, relevant_cells = self.get_children_generation_options(
-                    self.winner, p, parent_mat_2
-                )
+                index_of_p, index_of_w, relevant_cells = get_children_generation_options(self.winner, p, parent_mat_2)
                 new_preferences += two_cost_children_generation(
                     parent_matrix=parent_mat_2[2],
                     cost_of_parent_matrix=old_max_cost_so_far - 1,
@@ -285,9 +283,7 @@ class Manipulation:
 
             new_preferences = []
             for parent_mat_1 in matrices_to_examine_cost_1:
-                index_of_p, index_of_w, relevant_cells = self.get_children_generation_options(
-                    self.winner, p, parent_mat_1
-                )
+                index_of_p, index_of_w, relevant_cells = get_children_generation_options(self.winner, p, parent_mat_1)
                 new_preferences += one_cost_children_generation(
                     parent_matrix=parent_mat_1[2],
                     cost_of_parent_matrix=old_max_cost_so_far,
