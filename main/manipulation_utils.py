@@ -87,9 +87,9 @@ def one_cost_children_generation(
     index_of_w: int = None,
     rule: str = None,
     matrices_not_to_generate: List[pd.DataFrame] = None,
-    do_additions: bool,
-    do_omissions: bool,
-    do_flips: bool
+    do_additions: bool = True,
+    do_omissions: bool = True,
+    do_flips: bool = True
 ) -> List[Tuple[int, list, pd.DataFrame]]:
     """
     Generates all the matrices coming of a parent matrix with cost 1.
