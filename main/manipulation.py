@@ -1,7 +1,7 @@
 import copy
 import os
 import sys
-from typing import List, Tuple, Union
+from typing import List, Sequence, Tuple, Union
 
 import pandas as pd
 
@@ -45,7 +45,10 @@ class Manipulation:
         scores_of_alternatives: dict,
         alphabetical_order_of_alternatives: dict,
         method: str,
-        k: int
+        k: int,
+        do_additions: bool,
+        do_omissions: bool,
+        do_flips: bool
     ):
 
         self.all_preferences = all_preferences  # These are the preferences of all the voters in a list,
@@ -63,6 +66,9 @@ class Manipulation:
         self.alphabetical_order_of_alternatives = alphabetical_order_of_alternatives
         self.all_generated_matrices: List[Tuple[int, list, pd.DataFrame]] = []  # All the matrices generated as children
         # while exploring the tree of possible manipulations + the original matrix (preference)
+        self.do_additions = do_additions
+        self.do_omissions = do_omissions
+        self.do_flips = do_flips
 
     def check_for_possible_manipulation(self) -> bool:
         """
@@ -134,28 +140,28 @@ class Manipulation:
                 # check whether p would win if winner had score 0
                 scores_of_alternatives = copy.deepcopy(self.scores_of_alternatives)
                 scores_of_alternatives[str(self.winner)] -= 1
-                possible_winners = [
+                potential_winners = [
                     get_winners_from_scores(scores_of_alternatives, self.alphabetical_order_of_alternatives)[0]
-                ]
+                ]  # These possible_winners are not the same as above.
                 continue_with_next_alternative = False
-                while possible_winners[-1] != p:
+                while potential_winners[-1] != p:
                     if get_score_of_alternative_by_voter(
-                        self.preference, self.method, self.k, possible_winners[-1]
+                        self.preference, self.method, self.k, potential_winners[-1]
                     ) == 0:
                         continue_with_next_alternative = True
                         break
                     else:
                         # check whether p would win if possible_winner (say x) had score 0
-                        scores_of_alternatives[str(possible_winners[-1])] -= 1
-                        possible_winner = get_winners_from_scores(
+                        scores_of_alternatives[str(potential_winners[-1])] -= 1
+                        new_potential_winner = get_winners_from_scores(
                             scores_of_alternatives, self.alphabetical_order_of_alternatives
                         )[0]
-                        if possible_winner == possible_winners[-1]:
+                        if new_potential_winner == potential_winners[-1]:
                             # no new winners are found
                             continue_with_next_alternative = True
                             break
                         else:
-                            possible_winners.append(possible_winner)
+                            potential_winners.append(new_potential_winner)
 
                 if continue_with_next_alternative:
                     continue
@@ -165,40 +171,42 @@ class Manipulation:
                     "note that the relevant cells, besides the alternative w, will also concern all other 
                     alternatives that have to have their scores lowered"
                     '''
-                    all_prefs, manipulation_happened, winner = self.tree_generation(p)
+                    all_prefs, manipulation_happened, winner = self.tree_generation(
+                        p, potential_winners=potential_winners
+                    )
                     if manipulation_happened:
                         return all_prefs, winner
                     pass
 
             if p_score == 0 and winner_score == 1:
-                # The lofic of this section is the same as above
+                # The logic of this section is the same as above
                 # check whether p would win if winner had score 0
                 scores_of_alternatives = copy.deepcopy(self.scores_of_alternatives)
                 scores_of_alternatives[str(self.winner)] -= 1
                 scores_of_alternatives[str(p)] += 1
-                possible_winners = [
+                potential_winners = [
                     get_winners_from_scores(scores_of_alternatives, self.alphabetical_order_of_alternatives)[0]
                 ]
 
                 continue_with_next_alternative = False
-                while possible_winners[-1] != p:
+                while potential_winners[-1] != p:
                     if get_score_of_alternative_by_voter(
-                        self.preference, self.method, self.k, possible_winners[-1]
+                        self.preference, self.method, self.k, potential_winners[-1]
                     ) == 0:
                         continue_with_next_alternative = True
                         break
                     else:
                         # check whether p would win if possible_winner (say x) had score 0
-                        scores_of_alternatives[str(possible_winners[-1])] -= 1
+                        scores_of_alternatives[str(potential_winners[-1])] -= 1
                         possible_winner = get_winners_from_scores(
                             scores_of_alternatives, self.alphabetical_order_of_alternatives
                         )[0]
-                        if possible_winner == possible_winners[-1]:
+                        if possible_winner == potential_winners[-1]:
                             # no new winners are found
                             continue_with_next_alternative = True
                             break
                         else:
-                            possible_winners.append(possible_winner)
+                            potential_winners.append(possible_winner)
 
                 if continue_with_next_alternative:
                     continue
@@ -208,14 +216,16 @@ class Manipulation:
                     "note that the relevant cells, besides the alternative w, will also concern all other 
                     alternatives that have to have their scores lowered"
                     '''
-                    all_prefs, manipulation_happened, winner = self.tree_generation(p)
+                    all_prefs, manipulation_happened, winner = self.tree_generation(
+                        p, potential_winners=potential_winners
+                    )
                     if manipulation_happened:
                         return all_prefs, winner
                     pass
 
         return None
 
-    def tree_generation(self, p):
+    def tree_generation(self, p, potential_winners: Sequence = None):
         """
         Given an alternative p that is a possible winner and is preferred by our voter to the current winner, we want
         to check whether the voter can make p win. In order to do this, we generate matrices that differ from the
@@ -241,10 +251,12 @@ class Manipulation:
         new_preferences = one_cost_children_generation(
             parent_matrix=self.preference,
             cost_of_parent_matrix=self.absolute_cost_of_preference,
-            alternatives_of_interest=[p, self.winner],
+            alternatives_of_interest=list(set([p, self.winner] + potential_winners)),
             index_of_p=p,
             index_of_w=self.winner,
-            rule=self.method
+            rule=self.method,
+            do_additions=self.do_additions,
+            do_omissions=self.do_omissions
         )
         self.all_generated_matrices += new_preferences
         all_prefs, manipulation_happened, winner = self.check_if_manipulation_happened(all_prefs, new_preferences, p)
@@ -273,7 +285,8 @@ class Manipulation:
                     index_of_p=index_of_p,
                     index_of_w=index_of_w,
                     rule=self.method,
-                    matrices_not_to_generate=[x[2] for x in self.all_generated_matrices]
+                    matrices_not_to_generate=[x[2] for x in self.all_generated_matrices],
+                    do_flips=self.do_flips
                 )
             all_prefs, manipulation_happened, winner = self.check_if_manipulation_happened(
                 all_prefs, new_preferences, p
@@ -291,7 +304,9 @@ class Manipulation:
                     index_of_p=index_of_p,
                     index_of_w=index_of_w,
                     rule=self.method,
-                    matrices_not_to_generate=[x[2] for x in self.all_generated_matrices]
+                    matrices_not_to_generate=[x[2] for x in self.all_generated_matrices],
+                    do_omissions=self.do_omissions,
+                    do_additions=self.do_additions
                 )
             all_prefs, manipulation_happened, winner = self.check_if_manipulation_happened(
                 all_prefs, new_preferences, p

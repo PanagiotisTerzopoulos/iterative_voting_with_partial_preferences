@@ -6,8 +6,10 @@ import pandas as pd
 from iterative_voting.main.data_processing import check_transitivity
 
 
-def useful_change(parent_matrix: pd.DataFrame, index: int, col: int, type_of_alternative: str, rule: str,
-                  cost: int) -> Union[List[pd.DataFrame], None]:
+def useful_change(
+    parent_matrix: pd.DataFrame, index: int, col: int, type_of_alternative: str, rule: str, cost: int,
+    do_additions: bool, do_omissions: bool, do_flips: bool
+) -> Union[List[pd.DataFrame], None]:
     """
     Gets a parent matrix and creates its child for the case of the relevant change concerning either the possible
     winner p or the current winner w.
@@ -32,17 +34,21 @@ def useful_change(parent_matrix: pd.DataFrame, index: int, col: int, type_of_alt
         if type_of_alternative == 'p':
             new_matrix = copy.copy(parent_matrix)
             if parent_matrix.loc[index, col] == -1:
-                if cost == 1:
+                if cost == 1 and do_omissions:
                     new_matrix.loc[index, col] = 0
                     new_matrix.loc[col, index] = 0  # symmetry constraint
                     new_matrices.append(new_matrix)
-                else:
+                elif do_flips:
                     new_matrix.loc[index, col] = 1
                     new_matrix.loc[col, index] = -1  # symmetry constraint
                     new_matrices.append(new_matrix)
         else:
             new_matrix = copy.copy(parent_matrix)
-            if (parent_matrix.loc[index, col] == 0 and cost == 1) or (parent_matrix.loc[index, col] == 1 and cost == 2):
+            if (parent_matrix.loc[index, col] == 0 and cost == 1) and do_additions:
+                new_matrix.loc[index, col] = -1
+                new_matrix.loc[col, index] = 1  # symmetry constraint
+                new_matrices.append(new_matrix)
+            elif (parent_matrix.loc[index, col] == 1 and cost == 2) and do_flips:
                 new_matrix.loc[index, col] = -1
                 new_matrix.loc[col, index] = 1  # symmetry constraint
                 new_matrices.append(new_matrix)
@@ -50,19 +56,22 @@ def useful_change(parent_matrix: pd.DataFrame, index: int, col: int, type_of_alt
     else:
         if type_of_alternative == 'p':
             new_matrix = copy.copy(parent_matrix)
-            if (parent_matrix.loc[index, col] == 0 and
-                cost == 1) or (parent_matrix.loc[index, col] == -1 and cost == 2):
+            if (parent_matrix.loc[index, col] == 0 and cost == 1) and do_additions:
+                new_matrix.loc[index, col] = 1
+                new_matrix.loc[col, index] = -1  # symmetry constraint
+                new_matrices.append(new_matrix)
+            elif (parent_matrix.loc[index, col] == -1 and cost == 2) and do_flips:
                 new_matrix.loc[index, col] = 1
                 new_matrix.loc[col, index] = -1  # symmetry constraint
                 new_matrices.append(new_matrix)
         else:
             new_matrix = copy.copy(parent_matrix)
             if parent_matrix.loc[index, col] == 1:
-                if cost == 1:
+                if cost == 1 and do_omissions:
                     new_matrix.loc[index, col] = 0
                     new_matrix.loc[col, index] = 0  # symmetry constraint
                     new_matrices.append(new_matrix)
-                else:
+                elif do_flips:
                     new_matrix.loc[index, col] = -1
                     new_matrix.loc[col, index] = 1  # symmetry constraint
                     new_matrices.append(new_matrix)
@@ -77,7 +86,10 @@ def one_cost_children_generation(
     index_of_p: int = None,
     index_of_w: int = None,
     rule: str = None,
-    matrices_not_to_generate: List[pd.DataFrame] = None
+    matrices_not_to_generate: List[pd.DataFrame] = None,
+    do_additions: bool,
+    do_omissions: bool,
+    do_flips: bool
 ) -> List[Tuple[int, list, pd.DataFrame]]:
     """
     Generates all the matrices coming of a parent matrix with cost 1.
@@ -112,8 +124,15 @@ def one_cost_children_generation(
             if rel and row != col:
                 if row == index_of_p:
                     new_matrices = useful_change(
-                        parent_matrix=parent_matrix, index=index_of_p, col=col, type_of_alternative='p', rule=rule, \
-                                                                                                             cost=1
+                        parent_matrix=parent_matrix,
+                        index=index_of_p,
+                        col=col,
+                        type_of_alternative='p',
+                        rule=rule,
+                        cost=1,
+                        do_additions=do_additions,
+                        do_omissions=do_omissions,
+                        do_flips=do_flips
                     )
                     if new_matrices:
                         children_matrices += [
@@ -126,7 +145,10 @@ def one_cost_children_generation(
                         col=col,
                         type_of_alternative='w',
                         rule=rule,
-                        cost=1
+                        cost=1,
+                        do_additions=do_additions,
+                        do_omissions=do_omissions,
+                        do_flips=do_flips
                     )
                     if new_matrices:
                         children_matrices += [
@@ -134,7 +156,7 @@ def one_cost_children_generation(
                         ]
                 else:
                     # do additions
-                    if parent_matrix.loc[row, col] == 0:
+                    if parent_matrix.loc[row, col] == 0 and do_additions:
                         new_matrix = copy.copy(parent_matrix)
                         new_matrix.loc[row, col] = 1
                         new_matrix.loc[col, row] = -1  # symmetry constraint
@@ -144,8 +166,8 @@ def one_cost_children_generation(
                         new_matrix.loc[row, col] = -1
                         new_matrix.loc[col, row] = 1  # symmetry constraint
                         children_matrices.append((cost_of_parent_matrix + 1, [row], new_matrix))
-                    # do ommits
-                    if parent_matrix.loc[row, col] == 1 or parent_matrix.loc[row, col] == -1:
+                    # do ommissions
+                    if (parent_matrix.loc[row, col] == 1 or parent_matrix.loc[row, col] == -1) and do_omissions:
                         new_matrix = copy.copy(parent_matrix)
                         new_matrix.loc[row, col] = 0
                         new_matrix.loc[col, row] = 0  # symmetry constraint
@@ -164,7 +186,8 @@ def two_cost_children_generation(
     index_of_p: int = None,
     index_of_w: int = None,
     rule: str = None,
-    matrices_not_to_generate: List[pd.DataFrame] = None
+    matrices_not_to_generate: List[pd.DataFrame] = None,
+    do_flips: bool = True
 ) -> List[Tuple[int, list, pd.DataFrame]]:
     """
     Generates all the matrices coming of a parent matrix with cost 2.
@@ -204,7 +227,10 @@ def two_cost_children_generation(
                         col=col,
                         type_of_alternative='p',
                         rule=rule,
-                        cost=2
+                        cost=2,
+                        do_additions=True,  # this doesn't matter
+                        do_omissions=True,  # this doesn't matter
+                        do_flips=do_flips
                     )
                     if new_matrices:
                         children_matrices += [
@@ -217,7 +243,10 @@ def two_cost_children_generation(
                         col=col,
                         type_of_alternative='w',
                         rule=rule,
-                        cost=2
+                        cost=2,
+                        do_additions=True,  # this doesn't matter
+                        do_omissions=True,  # this doesn't matter
+                        do_flips=do_flips
                     )
                     if new_matrices:
                         children_matrices += [
@@ -225,7 +254,7 @@ def two_cost_children_generation(
                         ]
                 else:
                     # do flips
-                    if parent_matrix.loc[row, col] == 1 or parent_matrix.loc[row, col] == -1:
+                    if (parent_matrix.loc[row, col] == 1 or parent_matrix.loc[row, col] == -1) and do_flips:
                         new_matrix = copy.copy(parent_matrix)
                         new_matrix.loc[row, col] = parent_matrix.loc[col, row]
                         new_matrix.loc[col, row] = parent_matrix.loc[row, col]  # symmetry constraint
