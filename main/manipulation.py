@@ -271,7 +271,10 @@ class Manipulation:
 
         """
         while True:
-            old_max_cost_so_far = max([x[0] for x in self.all_generated_matrices])
+            if self.all_generated_matrices:
+                old_max_cost_so_far = max([x[0] for x in self.all_generated_matrices])
+            else:
+                old_max_cost_so_far = 0
             matrices_to_examine_cost_1 = find_matrices_with_score(self.all_generated_matrices, old_max_cost_so_far)
             matrices_to_examine_cost_2 = find_matrices_with_score(self.all_generated_matrices, old_max_cost_so_far - 1)
 
@@ -317,7 +320,10 @@ class Manipulation:
             self.all_generated_matrices += new_preferences
             # We exit the while loop  naturally when all relevant cells (resulting from each relevant
             # alternatives) have been changed and no manipulation happened
-            new_max_cost_so_far = max([x[0] for x in self.all_generated_matrices])
+            if self.all_generated_matrices:
+                new_max_cost_so_far = max([x[0] for x in self.all_generated_matrices])
+            else:
+                new_max_cost_so_far = 0
             if new_max_cost_so_far == old_max_cost_so_far:
                 break
         return all_prefs, manipulation_happened, winner
