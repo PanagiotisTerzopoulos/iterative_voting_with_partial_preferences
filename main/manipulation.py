@@ -128,8 +128,10 @@ class Manipulation:
                 scores_of_alternatives[str(p)] += 1
                 would_win = get_winners_from_scores(scores_of_alternatives,
                                                     self.alphabetical_order_of_alternatives)[0] == p
+                potential_winners=[]
                 if would_win:
-                    all_prefs, manipulation_happened, winner = self.tree_generation(p)
+                    all_prefs, manipulation_happened, winner = self.tree_generation(
+                        p, potential_winners=potential_winners)
 
                     if manipulation_happened:
                         return all_prefs, winner
