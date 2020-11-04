@@ -278,7 +278,8 @@ def find_matrices_with_score(matrices: List[Tuple[int, list, pd.DataFrame]],
     return [x for x in matrices if x[0] == score]
 
 
-def get_children_generation_options(w: int, p: int, parent_mat: Tuple[int, list, pd.DataFrame]):
+def get_children_generation_options(w: int, p: int, parent_mat: Tuple[int, list,
+                                                                      pd.DataFrame]) -> Tuple[int, int, list]:
     """
 
     Args:

@@ -1,7 +1,7 @@
 import copy
 import os
 import sys
-from typing import List, Sequence, Tuple, Union
+from typing import List, Tuple, Union
 
 import pandas as pd
 
@@ -64,8 +64,10 @@ class Manipulation:
         self.method = method
         self.k = k
         self.alphabetical_order_of_alternatives = alphabetical_order_of_alternatives
-        self.all_generated_matrices: List[Tuple[int, list, pd.DataFrame]] = []  # All the matrices generated as children
-        # while exploring the tree of possible manipulations + the original matrix (preference)
+        self.all_generated_matrices: List[Tuple[int, list, pd.DataFrame]] = [(0, [], self.preference)]  # All the
+        # matrices
+        # generated as children while exploring the tree of possible manipulations + the original matrix (
+        # preference). (cost-label_of_child, indices_changed_from_the_parent, child)
         self.do_additions = do_additions
         self.do_omissions = do_omissions
         self.do_flips = do_flips
@@ -128,10 +130,11 @@ class Manipulation:
                 scores_of_alternatives[str(p)] += 1
                 would_win = get_winners_from_scores(scores_of_alternatives,
                                                     self.alphabetical_order_of_alternatives)[0] == p
-                potential_winners=[]
+                potential_winners = []
                 if would_win:
                     all_prefs, manipulation_happened, winner = self.tree_generation(
-                        p, potential_winners=potential_winners)
+                        p, potential_winners=potential_winners
+                    )
 
                     if manipulation_happened:
                         return all_prefs, winner
@@ -183,51 +186,59 @@ class Manipulation:
             if p_score == 0 and winner_score == 1:
                 # The logic of this section is the same as above
                 # check whether p would win if winner had score 0
-                scores_of_alternatives = copy.deepcopy(self.scores_of_alternatives)
-                scores_of_alternatives[str(self.winner)] -= 1
-                scores_of_alternatives[str(p)] += 1
-                potential_winners = [
-                    get_winners_from_scores(scores_of_alternatives, self.alphabetical_order_of_alternatives)[0]
-                ]
 
-                continue_with_next_alternative = False
-                while potential_winners[-1] != p:
-                    if get_score_of_alternative_by_voter(
-                        self.preference, self.method, self.k, potential_winners[-1]
-                    ) == 0:
-                        continue_with_next_alternative = True
-                        break
-                    else:
-                        # check whether p would win if possible_winner (say x) had score 0
-                        scores_of_alternatives[str(potential_winners[-1])] -= 1
-                        possible_winner = get_winners_from_scores(
-                            scores_of_alternatives, self.alphabetical_order_of_alternatives
-                        )[0]
-                        if possible_winner == potential_winners[-1]:
-                            # no new winners are found
-                            continue_with_next_alternative = True
-                            break
-                        else:
-                            potential_winners.append(possible_winner)
+                # # TODO: this is wrong. It could be either of the two or both or in other order... Thus, we 'll skip it
+                # #  for now (it only added efficiency anyway)
+                # scores_of_alternatives[str(self.winner)] -= 1
+                # scores_of_alternatives[str(p)] += 1
+                # potential_winners = [
+                #     get_winners_from_scores(scores_of_alternatives, self.alphabetical_order_of_alternatives)[0]
+                # ]
+                #
+                # continue_with_next_alternative = False
+                # while potential_winners[-1] != p:
+                #     if get_score_of_alternative_by_voter(
+                #         self.preference, self.method, self.k, potential_winners[-1]
+                #     ) == 0:
+                #         continue_with_next_alternative = True
+                #         break
+                #     else:
+                #         # check whether p would win if possible_winner (say x) had score 0
+                #         scores_of_alternatives[str(potential_winners[-1])] -= 1
+                #         new_potential_winner = get_winners_from_scores(
+                #             scores_of_alternatives, self.alphabetical_order_of_alternatives
+                #         )[0]
+                #         if new_potential_winner == potential_winners[-1]:
+                #             # no new winners are found
+                #             continue_with_next_alternative = True
+                #             break
+                #         else:
+                #             potential_winners.append(new_potential_winner)
+                #
+                # if continue_with_next_alternative:
+                #     continue
+                # else:
+                #     '''
+                #     that means that possible_winner == p. the alternatives of interest here are all possible_winners:
+                #     "note that the relevant cells, besides the alternative w, will also concern all other
+                #     alternatives that have to have their scores lowered"
+                #     '''
+                #     all_prefs, manipulation_happened, winner = self.tree_generation(
+                #         p, potential_winners=potential_winners
+                #     )
+                #     if manipulation_happened:
+                #         return all_prefs, winner
+                #     pass
 
-                if continue_with_next_alternative:
-                    continue
-                else:
-                    '''
-                    that means that possible_winner == p. the alternatives of interest here are all possible_winners:
-                    "note that the relevant cells, besides the alternative w, will also concern all other 
-                    alternatives that have to have their scores lowered"
-                    '''
-                    all_prefs, manipulation_happened, winner = self.tree_generation(
-                        p, potential_winners=potential_winners
-                    )
-                    if manipulation_happened:
-                        return all_prefs, winner
-                    pass
+                potential_winners = [int(x) for x in self.scores_of_alternatives.keys()]
+                all_prefs, manipulation_happened, winner = self.tree_generation(p, potential_winners=potential_winners)
+
+                if manipulation_happened:
+                    return all_prefs, winner
 
         return None
 
-    def tree_generation(self, p, potential_winners: Sequence = None):
+    def tree_generation(self, p, potential_winners: list = None):
         """
         Given an alternative p that is a possible winner and is preferred by our voter to the current winner, we want
         to check whether the voter can make p win. In order to do this, we generate matrices that differ from the
@@ -265,13 +276,16 @@ class Manipulation:
         if not manipulation_happened:
             # since the direct one-cost children of the original didn't work, for every child generate the
             # 1-cost children and the 2-cost children from the previous matrix.
-            all_prefs, manipulation_happened, winner = self.tree_generation_level_1_onwards(all_prefs, p)
+            all_prefs, manipulation_happened, winner = self.tree_generation_level_1_onwards(
+                all_prefs, p, potential_winners
+            )
         return all_prefs, manipulation_happened, winner
 
-    def tree_generation_level_1_onwards(self, all_prefs, p):
+    def tree_generation_level_1_onwards(self, all_prefs: List[pd.DataFrame], p: int, potential_winners: list):
         """
 
         """
+        print('in tree_generation_level_1_onwards')
         while True:
             if self.all_generated_matrices:
                 old_max_cost_so_far = max([x[0] for x in self.all_generated_matrices])
@@ -279,14 +293,13 @@ class Manipulation:
                 old_max_cost_so_far = 0
             matrices_to_examine_cost_1 = find_matrices_with_score(self.all_generated_matrices, old_max_cost_so_far)
             matrices_to_examine_cost_2 = find_matrices_with_score(self.all_generated_matrices, old_max_cost_so_far - 1)
-
             new_preferences = []
             for parent_mat_2 in matrices_to_examine_cost_2:
                 index_of_p, index_of_w, relevant_cells = get_children_generation_options(self.winner, p, parent_mat_2)
                 new_preferences += two_cost_children_generation(
                     parent_matrix=parent_mat_2[2],
                     cost_of_parent_matrix=old_max_cost_so_far - 1,
-                    alternatives_of_interest=relevant_cells,
+                    alternatives_of_interest=list(set(relevant_cells + potential_winners)),
                     index_of_p=index_of_p,
                     index_of_w=index_of_w,
                     rule=self.method,
@@ -305,7 +318,7 @@ class Manipulation:
                 new_preferences += one_cost_children_generation(
                     parent_matrix=parent_mat_1[2],
                     cost_of_parent_matrix=old_max_cost_so_far,
-                    alternatives_of_interest=relevant_cells,
+                    alternatives_of_interest=list(set(relevant_cells + potential_winners)),
                     index_of_p=index_of_p,
                     index_of_w=index_of_w,
                     rule=self.method,
