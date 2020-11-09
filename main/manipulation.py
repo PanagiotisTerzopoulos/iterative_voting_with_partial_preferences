@@ -1,5 +1,6 @@
 import copy
 import os
+import random
 import sys
 from typing import List, Tuple, Union
 
@@ -293,41 +294,20 @@ class Manipulation:
                 old_max_cost_so_far = 0
             matrices_to_examine_cost_1 = find_matrices_with_score(self.all_generated_matrices, old_max_cost_so_far)
             matrices_to_examine_cost_2 = find_matrices_with_score(self.all_generated_matrices, old_max_cost_so_far - 1)
-            new_preferences = []
-            for parent_mat_2 in matrices_to_examine_cost_2:
-                index_of_p, index_of_w, relevant_cells = get_children_generation_options(self.winner, p, parent_mat_2)
-                new_preferences += two_cost_children_generation(
-                    parent_matrix=parent_mat_2[2],
-                    cost_of_parent_matrix=old_max_cost_so_far - 1,
-                    alternatives_of_interest=list(set(relevant_cells + potential_winners)),
-                    index_of_p=index_of_p,
-                    index_of_w=index_of_w,
-                    rule=self.method,
-                    matrices_not_to_generate=[x[2] for x in self.all_generated_matrices],
-                    do_flips=self.do_flips
-                )
-            all_prefs, manipulation_happened, winner = self.check_if_manipulation_happened(
-                all_prefs, new_preferences, p
+
+            func_to_use_first = {
+                0: (self.examine_matrices_cost_2, matrices_to_examine_cost_2),
+                1: (self.examine_matrices_cost_1, matrices_to_examine_cost_1)
+            }
+            order = random.randint(0, 1)
+            all_prefs, manipulation_happened, new_preferences, winner = func_to_use_first[order][0](
+                all_prefs, func_to_use_first[order][1], old_max_cost_so_far, p, potential_winners
             )
             if manipulation_happened:
                 break
-
-            new_preferences = []
-            for parent_mat_1 in matrices_to_examine_cost_1:
-                index_of_p, index_of_w, relevant_cells = get_children_generation_options(self.winner, p, parent_mat_1)
-                new_preferences += one_cost_children_generation(
-                    parent_matrix=parent_mat_1[2],
-                    cost_of_parent_matrix=old_max_cost_so_far,
-                    alternatives_of_interest=list(set(relevant_cells + potential_winners)),
-                    index_of_p=index_of_p,
-                    index_of_w=index_of_w,
-                    rule=self.method,
-                    matrices_not_to_generate=[x[2] for x in self.all_generated_matrices],
-                    do_omissions=self.do_omissions,
-                    do_additions=self.do_additions
-                )
-            all_prefs, manipulation_happened, winner = self.check_if_manipulation_happened(
-                all_prefs, new_preferences, p
+            order = 0 if order else 1
+            all_prefs, manipulation_happened, new_preferences, winner = func_to_use_first[order][0](
+                all_prefs, func_to_use_first[order][1], old_max_cost_so_far, p, potential_winners
             )
             if manipulation_happened:
                 break
@@ -342,6 +322,41 @@ class Manipulation:
             if new_max_cost_so_far == old_max_cost_so_far:
                 break
         return all_prefs, manipulation_happened, winner
+
+    def examine_matrices_cost_2(self, all_prefs, matrices_to_examine_cost_2, old_max_cost_so_far, p, potential_winners):
+        new_preferences = []
+        for parent_mat_2 in matrices_to_examine_cost_2:
+            index_of_p, index_of_w, relevant_cells = get_children_generation_options(self.winner, p, parent_mat_2)
+            new_preferences += two_cost_children_generation(
+                parent_matrix=parent_mat_2[2],
+                cost_of_parent_matrix=old_max_cost_so_far - 1,
+                alternatives_of_interest=list(set(relevant_cells + potential_winners)),
+                index_of_p=index_of_p,
+                index_of_w=index_of_w,
+                rule=self.method,
+                matrices_not_to_generate=[x[2] for x in self.all_generated_matrices],
+                do_flips=self.do_flips
+            )
+        all_prefs, manipulation_happened, winner = self.check_if_manipulation_happened(all_prefs, new_preferences, p)
+        return all_prefs, manipulation_happened, new_preferences, winner
+
+    def examine_matrices_cost_1(self, all_prefs, matrices_to_examine_cost_1, old_max_cost_so_far, p, potential_winners):
+        new_preferences = []
+        for parent_mat_1 in matrices_to_examine_cost_1:
+            index_of_p, index_of_w, relevant_cells = get_children_generation_options(self.winner, p, parent_mat_1)
+            new_preferences += one_cost_children_generation(
+                parent_matrix=parent_mat_1[2],
+                cost_of_parent_matrix=old_max_cost_so_far,
+                alternatives_of_interest=list(set(relevant_cells + potential_winners)),
+                index_of_p=index_of_p,
+                index_of_w=index_of_w,
+                rule=self.method,
+                matrices_not_to_generate=[x[2] for x in self.all_generated_matrices],
+                do_omissions=self.do_omissions,
+                do_additions=self.do_additions
+            )
+        all_prefs, manipulation_happened, winner = self.check_if_manipulation_happened(all_prefs, new_preferences, p)
+        return all_prefs, manipulation_happened, new_preferences, winner
 
     def check_if_manipulation_happened(
         self, all_prefs: List[pd.DataFrame], new_preferences: List[Tuple[int, list, pd.DataFrame]], p: int
