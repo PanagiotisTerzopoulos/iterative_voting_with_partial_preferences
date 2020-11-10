@@ -45,11 +45,11 @@ def useful_change(
                     new_matrices.append(new_matrix)
         else:
             new_matrix = copy.copy(parent_matrix)
-            if (parent_matrix.loc[index, col] == 0 and cost == 1) and do_additions:
+            if parent_matrix.loc[index, col] == 0 and cost == 1 and do_additions:
                 new_matrix.loc[index, col] = -1
                 new_matrix.loc[col, index] = 1  # symmetry constraint
                 new_matrices.append(new_matrix)
-            elif (parent_matrix.loc[index, col] == 1 and cost == 2) and do_flips:
+            elif parent_matrix.loc[index, col] == 1 and cost == 2 and do_flips:
                 new_matrix.loc[index, col] = -1
                 new_matrix.loc[col, index] = 1  # symmetry constraint
                 new_matrices.append(new_matrix)
@@ -57,7 +57,7 @@ def useful_change(
     else:
         if type_of_alternative == 'p':
             new_matrix = copy.copy(parent_matrix)
-            if (parent_matrix.loc[index, col] == 0 and cost == 1) and do_additions:
+            if parent_matrix.loc[index, col] == 0 and cost == 1 and do_additions:
                 new_matrix.loc[index, col] = 1
                 new_matrix.loc[col, index] = -1  # symmetry constraint
                 new_matrices.append(new_matrix)

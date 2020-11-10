@@ -2,6 +2,7 @@ import copy
 import os
 import random
 import sys
+import time
 from typing import List, Tuple, Union
 
 import pandas as pd
@@ -51,7 +52,7 @@ class Manipulation:
         do_omissions: bool,
         do_flips: bool
     ):
-
+        self.init_total_time = time.time()
         self.all_preferences = all_preferences  # These are the preferences of all the voters in a list,
         # in the beginning of the current manipulation round.
         self.preference_idx = preference_idx
@@ -138,6 +139,7 @@ class Manipulation:
                     )
 
                     if manipulation_happened:
+                        print(f'took total time {time.time()-self.init_total_time}')
                         return all_prefs, winner
                 else:
                     continue
@@ -181,6 +183,7 @@ class Manipulation:
                         p, potential_winners=potential_winners
                     )
                     if manipulation_happened:
+                        print(f'took total time {time.time() - self.init_total_time}')
                         return all_prefs, winner
                     pass
 
@@ -235,6 +238,7 @@ class Manipulation:
                 all_prefs, manipulation_happened, winner = self.tree_generation(p, potential_winners=potential_winners)
 
                 if manipulation_happened:
+                    print(f'took total time {time.time() - self.init_total_time}')
                     return all_prefs, winner
 
         return None
@@ -260,7 +264,7 @@ class Manipulation:
 
         """
         print(f'Alternative {p} is preferred. Investigating possible manipulation.')
-        all_prefs = copy.deepcopy(self.all_preferences)
+        all_prefs = list(copy.deepcopy(self.all_preferences))
         # first generate all the 1-cost children of the original matrix
         new_preferences = one_cost_children_generation(
             parent_matrix=self.preference,
@@ -288,6 +292,7 @@ class Manipulation:
         """
         print('in tree_generation_level_1_onwards')
         while True:
+            init_time = time.time()
             if self.all_generated_matrices:
                 old_max_cost_so_far = max([x[0] for x in self.all_generated_matrices])
             else:
@@ -319,11 +324,14 @@ class Manipulation:
                 new_max_cost_so_far = max([x[0] for x in self.all_generated_matrices])
             else:
                 new_max_cost_so_far = 0
+            print(f'new_max_cost_so_far: {new_max_cost_so_far}')
+            print(f'iteration took {time.time()-init_time} sec.')
             if new_max_cost_so_far == old_max_cost_so_far:
                 break
         return all_prefs, manipulation_happened, winner
 
     def examine_matrices_cost_2(self, all_prefs, matrices_to_examine_cost_2, old_max_cost_so_far, p, potential_winners):
+        print('in examine_matrices_cost_2')
         new_preferences = []
         for parent_mat_2 in matrices_to_examine_cost_2:
             index_of_p, index_of_w, relevant_cells = get_children_generation_options(self.winner, p, parent_mat_2)
@@ -337,10 +345,12 @@ class Manipulation:
                 matrices_not_to_generate=[x[2] for x in self.all_generated_matrices],
                 do_flips=self.do_flips
             )
+        print(f'all generated matrices so far {len(self.all_generated_matrices)}')
         all_prefs, manipulation_happened, winner = self.check_if_manipulation_happened(all_prefs, new_preferences, p)
         return all_prefs, manipulation_happened, new_preferences, winner
 
     def examine_matrices_cost_1(self, all_prefs, matrices_to_examine_cost_1, old_max_cost_so_far, p, potential_winners):
+        print('in examine_matrices_cost_1')
         new_preferences = []
         for parent_mat_1 in matrices_to_examine_cost_1:
             index_of_p, index_of_w, relevant_cells = get_children_generation_options(self.winner, p, parent_mat_1)
@@ -355,6 +365,7 @@ class Manipulation:
                 do_omissions=self.do_omissions,
                 do_additions=self.do_additions
             )
+        print(f'all generated matrices so far {len(self.all_generated_matrices)}')
         all_prefs, manipulation_happened, winner = self.check_if_manipulation_happened(all_prefs, new_preferences, p)
         return all_prefs, manipulation_happened, new_preferences, winner
 
@@ -364,18 +375,20 @@ class Manipulation:
         """
 
         """
+        print('in check_if_manipulation_happened')
         manipulation_happened = False
         winner = None
+        all_prefs_tmp = copy.deepcopy(all_prefs)
         for pref_cost, _, pref in new_preferences:
-            all_prefs[self.preference_idx] = pref
+            all_prefs_tmp[self.preference_idx] = pref
             # TODO: NB: make this code more efficient. we don't need to evaluate the whole profile every
             #  time. we have the scores of alternatives dictionary and we can calculate with the
             #  'get_score_of_alternative_by_voter' function the score the old preference gives and the
             #  one the new pref gives. Substract once for all the alternatives the old scores of the
             #  voter and then add the new ones (for all alternatives) each time you check a preference.
-            winner, *_ = evaluate_profile(all_prefs, self.k, self.method, self.alphabetical_order_of_alternatives)
+            winner, *_ = evaluate_profile(all_prefs_tmp, self.k, self.method, self.alphabetical_order_of_alternatives)
             if winner == p and check_transitivity(pref):
                 print('Manipulation happened!')
                 manipulation_happened = True
                 break
-        return all_prefs, manipulation_happened, winner
+        return all_prefs_tmp, manipulation_happened, winner
