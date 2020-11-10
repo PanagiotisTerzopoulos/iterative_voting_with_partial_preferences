@@ -88,9 +88,8 @@ def one_cost_children_generation(
     index_of_w: int = None,
     rule: str = None,
     matrices_not_to_generate: List[pd.DataFrame] = None,
-    do_additions: bool = True,
-    do_omissions: bool = True,
-    do_flips: bool = True
+    do_additions: bool = None,
+    do_omissions: bool = None
 ) -> List[Tuple[int, list, pd.DataFrame]]:
     """
     Generates all the matrices coming of a parent matrix with cost 1.
@@ -117,6 +116,8 @@ def one_cost_children_generation(
     #  don't need at all the "matrices_not_to_generate" in this case.
     if index_of_w or index_of_p:
         assert rule in ['veto', 'approval']
+    assert do_additions is not None
+    assert do_omissions is not None
 
     relevant_rows = parent_matrix.index.isin(alternatives_of_interest)
     children_matrices = []
@@ -133,7 +134,7 @@ def one_cost_children_generation(
                         cost=1,
                         do_additions=do_additions,
                         do_omissions=do_omissions,
-                        do_flips=do_flips
+                        do_flips=False
                     )
                     if new_matrices:
                         children_matrices += [
@@ -149,7 +150,7 @@ def one_cost_children_generation(
                         cost=1,
                         do_additions=do_additions,
                         do_omissions=do_omissions,
-                        do_flips=do_flips
+                        do_flips=False
                     )
                     if new_matrices:
                         children_matrices += [
@@ -183,6 +184,7 @@ def do_omissions_func(children_matrices, col, cost_of_parent_matrix, do_omission
         new_matrix = copy.copy(parent_matrix)
         new_matrix.loc[row, col] = 0
         new_matrix.loc[col, row] = 0  # symmetry constraint
+
         children_matrices.append((cost_of_parent_matrix + 1, [row], new_matrix))
 
 
@@ -191,11 +193,13 @@ def do_additions_func(children_matrices, col, cost_of_parent_matrix, do_addition
         new_matrix = copy.copy(parent_matrix)
         new_matrix.loc[row, col] = 1
         new_matrix.loc[col, row] = -1  # symmetry constraint
+
         children_matrices.append((cost_of_parent_matrix + 1, [row], new_matrix))
 
         new_matrix = copy.copy(parent_matrix)
         new_matrix.loc[row, col] = -1
         new_matrix.loc[col, row] = 1  # symmetry constraint
+
         children_matrices.append((cost_of_parent_matrix + 1, [row], new_matrix))
 
 
@@ -278,6 +282,7 @@ def two_cost_children_generation(
                         new_matrix = copy.copy(parent_matrix)
                         new_matrix.loc[row, col] = parent_matrix.loc[col, row]
                         new_matrix.loc[col, row] = parent_matrix.loc[row, col]  # symmetry constraint
+
                         children_matrices.append((cost_of_parent_matrix + 2, [row], new_matrix))
 
     if matrices_not_to_generate:
