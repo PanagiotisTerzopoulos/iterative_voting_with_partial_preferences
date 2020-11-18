@@ -191,55 +191,60 @@ class Manipulation:
                 # The logic of this section is the same as above
                 # check whether p would win if winner had score 0
 
-                # # TODO: this is wrong. It could be either of the two or both or in other order... Thus, we 'll skip it
-                # #  for now (it only added efficiency anyway)
-                # scores_of_alternatives[str(self.winner)] -= 1
-                # scores_of_alternatives[str(p)] += 1
-                # potential_winners = [
-                #     get_winners_from_scores(scores_of_alternatives, self.alphabetical_order_of_alternatives)[0]
-                # ]
-                #
-                # continue_with_next_alternative = False
-                # while potential_winners[-1] != p:
-                #     if get_score_of_alternative_by_voter(
-                #         self.preference, self.method, self.k, potential_winners[-1]
-                #     ) == 0:
-                #         continue_with_next_alternative = True
-                #         break
-                #     else:
-                #         # check whether p would win if possible_winner (say x) had score 0
-                #         scores_of_alternatives[str(potential_winners[-1])] -= 1
-                #         new_potential_winner = get_winners_from_scores(
-                #             scores_of_alternatives, self.alphabetical_order_of_alternatives
-                #         )[0]
-                #         if new_potential_winner == potential_winners[-1]:
-                #             # no new winners are found
-                #             continue_with_next_alternative = True
-                #             break
-                #         else:
-                #             potential_winners.append(new_potential_winner)
-                #
-                # if continue_with_next_alternative:
-                #     continue
-                # else:
-                #     '''
-                #     that means that possible_winner == p. the alternatives of interest here are all possible_winners:
-                #     "note that the relevant cells, besides the alternative w, will also concern all other
-                #     alternatives that have to have their scores lowered"
-                #     '''
-                #     all_prefs, manipulation_happened, winner = self.tree_generation(
-                #         p, potential_winners=potential_winners
-                #     )
-                #     if manipulation_happened:
-                #         return all_prefs, winner
-                #     pass
+                # TODO: this is wrong. It could be either of the two or both or in other order... Thus, we 'll skip it
+                #  for now (it only added efficiency anyway)
+                scores_of_alternatives = copy.deepcopy(self.scores_of_alternatives)
+                scores_of_alternatives[str(self.winner)] -= 1
+                potential_winners = [
+                    get_winners_from_scores(scores_of_alternatives, self.alphabetical_order_of_alternatives)[0]
+                ]
 
-                potential_winners = [int(x) for x in self.scores_of_alternatives.keys()]
-                all_prefs, manipulation_happened, winner = self.tree_generation(p, potential_winners=potential_winners)
+                continue_with_next_alternative = False
+                while potential_winners[-1] != p:
+                    if get_score_of_alternative_by_voter(
+                        self.preference, self.method, self.k, potential_winners[-1]
+                    ) == 0:
+                        scores_of_alternatives[str(p)] += 1
+                        p_increased_potential_winner = get_winners_from_scores(
+                            scores_of_alternatives, self.alphabetical_order_of_alternatives
+                        )[0]
+                        if p_increased_potential_winner != p:
+                            continue_with_next_alternative = True
+                            break
+                    else:
+                        # check whether p would win if possible_winner (say x) had score 0
+                        scores_of_alternatives[str(potential_winners[-1])] -= 1
+                        new_potential_winner = get_winners_from_scores(
+                            scores_of_alternatives, self.alphabetical_order_of_alternatives
+                        )[0]
+                        if new_potential_winner == potential_winners[-1]:
+                            # no new winners are found
+                            scores_of_alternatives[str(p)] += 1
+                            p_increased_potential_winner = get_winners_from_scores(
+                                scores_of_alternatives, self.alphabetical_order_of_alternatives
+                            )[0]
+                            if p_increased_potential_winner != p:
+                                continue_with_next_alternative = True
+                                break
+                        else:
+                            potential_winners.append(new_potential_winner)
 
-                if manipulation_happened:
-                    print(f'took total time {time.time() - self.init_total_time}')
-                    return all_prefs, winner
+                if continue_with_next_alternative:
+                    print('continue with next alternative is True, tree generation skipped')
+                    continue
+                else:
+                    '''
+                    that means that possible_winner == p. the alternatives of interest here are all possible_winners:
+                    "note that the relevant cells, besides the alternative w, will also concern all other
+                    alternatives that have to have their scores lowered"
+                    '''
+                    all_prefs, manipulation_happened, winner = self.tree_generation(
+                        p, potential_winners=potential_winners
+                    )
+                    if manipulation_happened:
+                        print(f'took total time {time.time() - self.init_total_time}')
+                        return all_prefs, winner
+                    pass  # continue with next alternative
 
         return None
 
