@@ -111,8 +111,9 @@ class Manipulation:
         and if the voter manages to manipulate it returns the voter's updated preference, otherwise returns None.
 
         Returns:
-            None if Manipulation cannot happen or the new profile and the the winner in a tuple if manipulation happens.
+            None if Manipulation cannot happen or the new profile and the winner in a tuple if manipulation happens.
         """
+        # TODO: this function probably doesn't need to return the winner, just the new profile
         # alternatives_to_check are all the possible winners that the current voter truthfully prefers to the profile
         # winner (self.w)
         alternatives_to_check = [
