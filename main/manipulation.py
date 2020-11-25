@@ -140,7 +140,7 @@ class Manipulation:
                     )
 
                     if manipulation_happened:
-                        print(f'took total time {time.time()-self.init_total_time}')
+                        print(f'took total time {time.time() - self.init_total_time}')
                         return all_prefs, winner
                 else:
                     continue
@@ -299,12 +299,16 @@ class Manipulation:
         print('in tree_generation_level_1_onwards')
         while True:
             init_time = time.time()
-            if self.all_generated_matrices:
-                old_max_cost_so_far = max([x[0] for x in self.all_generated_matrices])
+            assert self.all_generated_matrices
+            old_max_cost_so_far = max([x[0] for x in self.all_generated_matrices])
+            if old_max_cost_so_far != 0:
+                matrices_to_examine_cost_2 = find_matrices_with_score(
+                    self.all_generated_matrices, old_max_cost_so_far - 1
+                )
+                matrices_to_examine_cost_1 = find_matrices_with_score(self.all_generated_matrices, old_max_cost_so_far)
             else:
-                old_max_cost_so_far = 0
-            matrices_to_examine_cost_1 = find_matrices_with_score(self.all_generated_matrices, old_max_cost_so_far)
-            matrices_to_examine_cost_2 = find_matrices_with_score(self.all_generated_matrices, old_max_cost_so_far - 1)
+                matrices_to_examine_cost_2 = find_matrices_with_score(self.all_generated_matrices, old_max_cost_so_far)
+                matrices_to_examine_cost_1 = []
 
             func_to_use_first = {
                 0: (self.examine_matrices_cost_2, matrices_to_examine_cost_2),
@@ -331,7 +335,7 @@ class Manipulation:
             else:
                 new_max_cost_so_far = 0
             print(f'new_max_cost_so_far: {new_max_cost_so_far}')
-            print(f'iteration took {time.time()-init_time} sec.')
+            print(f'iteration took {time.time() - init_time} sec.')
             if new_max_cost_so_far == old_max_cost_so_far:
                 break
         return all_prefs, manipulation_happened, winner
