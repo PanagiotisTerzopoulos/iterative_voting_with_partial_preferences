@@ -398,8 +398,6 @@ class Manipulation:
         """
 
         """
-        if self.verbose:
-            print('in check_if_manipulation_happened')
         manipulation_happened = False
         winner = None
         all_prefs_tmp = copy.deepcopy(all_prefs)
