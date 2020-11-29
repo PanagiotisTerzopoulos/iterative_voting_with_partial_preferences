@@ -34,10 +34,10 @@ alphabetical_order = {}
 for i in all_preferences[0].index:
     alphabetical_order[i] = i
 
-cost_of_voter_pref = 0
 k = int(input('k?'))
 assert k <= len(all_preferences[0]), 'k can be at most the number of alternatives'
 method = input('method? (approval/method)')
+assert method in ['veto', 'approval']
 cycle_limit = int(input('Cycle limit?') or 100)
 num_iterations = int(input('Num iterations?') or 5)
 do_additions = boolean_input(input('do additions?') or 'True')
@@ -67,11 +67,12 @@ for meta_counter in range(num_iterations):
         winner, possible_winners, scores_of_alternatives = evaluate_profile(
             graphs=current_profile, k=k, method=method, alphabetical_order=alphabetical_order
         )
+        if verbose:
+            print(f'scores of alternatives: {scores_of_alternatives}')
 
         man = Manipulation(
             all_preferences=current_profile,
             preference_idx=random_voter,
-            absolute_cost_of_preference=cost_of_voter_pref,
             winner=winner,
             truthful_profile=all_preferences,
             possible_winners=possible_winners,

@@ -41,7 +41,6 @@ class Manipulation:
         preference_idx: int,  # The index for the 'all_preferences' list that corresponds to the preference of the
         # specific voter.
         truthful_profile: List[pd.DataFrame],
-        absolute_cost_of_preference: int,
         winner: int,
         possible_winners: List[int],
         scores_of_alternatives: dict,
@@ -59,7 +58,6 @@ class Manipulation:
         self.preference_idx = preference_idx
         self.preference = all_preferences[preference_idx]  # The preference of the specific voter.
         self.truthful_profile = truthful_profile  # This is the original profile, before any manipulation of any voter.
-        self.absolute_cost_of_preference = absolute_cost_of_preference
         self.winner = winner
         self.possible_winners = possible_winners
         self.scores_of_alternatives = scores_of_alternatives  # The total scores of the alternatives in the profile,
@@ -281,7 +279,7 @@ class Manipulation:
         # first generate all the 1-cost children of the original matrix
         new_preferences = one_cost_children_generation(
             parent_matrix=self.preference,
-            cost_of_parent_matrix=self.absolute_cost_of_preference,
+            cost_of_parent_matrix=0,  # this is always the beggining of the tree so the initial cost is 0
             alternatives_of_interest=list(set([p, self.winner] + potential_winners)),
             index_of_p=p,
             index_of_w=self.winner,
