@@ -194,8 +194,6 @@ class Manipulation:
                 # The logic of this section is the same as above
                 # check whether p would win if winner had score 0
 
-                # TODO: this is wrong. It could be either of the two or both or in other order... Thus, we 'll skip it
-                #  for now (it only added efficiency anyway)
                 scores_of_alternatives = copy.deepcopy(self.scores_of_alternatives)
                 scores_of_alternatives[str(self.winner)] -= 1
                 potential_winners = [

@@ -1,101 +1,63 @@
-from copy import copy
+import argparse
+import os
 
 import dill
-import numpy as np
-from main.data_processing import evaluate_profile
-from main.manipulation import Manipulation
+from tqdm import tqdm
+
+from main.orchestration import voting_iteration
+
+with open(f'data/our_data.pkl', 'rb') as f:
+    all_data = dill.load(f)
 
 
-def boolean_input(x):
-    if x == "True":
-        return True
-    elif x == 'False':
-        return False
+def main(args):
+    alphabetical_order = {}
+    for i in range(args.num_alt):
+        alphabetical_order[i] = i
+
+    data_to_use = all_data[(args.num_voters, args.num_alt, args.data_type)]
+
+    if os.path.isfile('data/results/total_result.pkl'):
+        with open('data/results/total_result.pkl', 'rb') as f:
+            total_result = dill.load(f)
     else:
-        raise ValueError
+        total_result = {}
+
+    prof_indices_to_run = list(range(len(data_to_use))) if args.random_choice is None else [args.random_choice]
+
+    for random_profile in tqdm(prof_indices_to_run, desc='random profiles'):
+        all_preferences = data_to_use[random_profile]
+        for meta_counter in range(args.num_iterations):
+            convergence_happened, res_dict = voting_iteration(
+                all_preferences, args.verbose, args.k, args.method, alphabetical_order, args.do_additions,
+                args.do_omissions, args.do_flips, args.cycle_limit
+            )
+            total_result[(
+                args.num_alt, args.num_voters, args.data_type, random_profile, args.k, args.method, args.cycle_limit,
+                meta_counter, args.do_additions, args.do_omissions, args.do_flips
+            )] = (convergence_happened, res_dict)
+
+    with open('data/results/total_result.pkl', 'wb') as f:
+        dill.dump(total_result, f)
 
 
-def select_new_random_voter(failed, total_num, voter_to_exclude):
-    if voter_to_exclude is not None:
-        set_to_select_from = [x for x in range(total_num) if x not in failed and x != voter_to_exclude]
-    else:
-        set_to_select_from = [x for x in range(total_num) if x not in failed]
-    if len(set_to_select_from) == 0:
-        return None
-    else:
-        return set_to_select_from[np.random.randint(len(set_to_select_from))]
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
 
+    parser.add_argument('--num_alt', type=int, default=3)
+    parser.add_argument('--num_voters', type=int, default=10)
+    parser.add_argument('--data_type', type=str, default='ic')
+    parser.add_argument('--random_choice', type=int, default=None)
+    parser.add_argument('--k', type=int, default=1)
+    parser.add_argument('--method', type=str, default='approval')
+    parser.add_argument('--cycle_limit', type=int, default=100)
+    parser.add_argument('--num_iterations', type=int, default=1)
+    parser.add_argument('--do_additions', type=bool, default=True)
+    parser.add_argument('--do_omissions', type=bool, default=True)
+    parser.add_argument('--do_flips', type=bool, default=True)
+    parser.add_argument('--verbose', type=bool, default=False)
 
-data_inp = input('Manual example to load?')
-with open(f'data/profile_manual_example_{data_inp}.pkl', 'rb') as f:
-    all_preferences = dill.load(f)
+    args = parser.parse_args()
+    assert args.k <= args.num_alt
 
-alphabetical_order = {}
-for i in all_preferences[0].index:
-    alphabetical_order[i] = i
-
-k = int(input('k?'))
-assert k <= len(all_preferences[0]), 'k can be at most the number of alternatives'
-method = input('method? (approval/veto)')
-assert method in ['veto', 'approval']
-cycle_limit = int(input('Cycle limit?') or 100)
-num_iterations = int(input('Num iterations?') or 5)
-do_additions = boolean_input(input('do additions?') or 'True')
-do_omissions = boolean_input(input('do omissions?') or 'True')
-do_flips = boolean_input(input('do flips?') or 'True')
-verbose = boolean_input(input('verbose?') or 'False')
-
-convergence_rounds = []
-for meta_counter in range(num_iterations):
-
-    current_profile = copy(
-        all_preferences
-    )  # Initialize the current profile of preferences for all voters.to be the same as the truthful profile.
-    num_rounds = 0
-    failed_manipulators = []
-    manipulator_voter = None
-
-    while True:
-        random_voter = select_new_random_voter(failed_manipulators, len(all_preferences), manipulator_voter)
-        if random_voter is None:
-            print(f'Convergence is achieved in {num_rounds} rounds!')
-            convergence_rounds.append(num_rounds)
-            break
-        elif verbose:
-            print(f'\nRandom voter chosen: {random_voter}')
-
-        winner, possible_winners, scores_of_alternatives = evaluate_profile(
-            graphs=current_profile, k=k, method=method, alphabetical_order=alphabetical_order
-        )
-        if verbose:
-            print(f'scores of alternatives: {scores_of_alternatives}')
-
-        man = Manipulation(
-            all_preferences=current_profile,
-            preference_idx=random_voter,
-            winner=winner,
-            truthful_profile=all_preferences,
-            possible_winners=possible_winners,
-            scores_of_alternatives=scores_of_alternatives,
-            alphabetical_order_of_alternatives=alphabetical_order,
-            method=method,
-            k=k,
-            do_additions=do_additions,
-            do_omissions=do_omissions,
-            do_flips=do_flips,
-            verbose=verbose
-        )
-
-        result = man.manipulation_move()
-        if result is not None:
-            current_profile, _ = result
-            num_rounds += 1
-            failed_manipulators = []
-            if num_rounds > cycle_limit:
-                print(f'No convergence for {cycle_limit} rounds. Assumed a cycle.')
-                continue
-            manipulator_voter = random_voter
-        else:
-            if verbose:
-                print(f'Voter: {random_voter} cannot manipulate.')
-            failed_manipulators.append(random_voter)
+    main(args)

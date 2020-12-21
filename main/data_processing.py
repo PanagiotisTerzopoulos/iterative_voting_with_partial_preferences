@@ -1,5 +1,7 @@
 from typing import List, Tuple
 
+import matplotlib.pyplot as plt
+import networkx as nx
 import numpy as np
 import pandas as pd
 
@@ -70,3 +72,22 @@ def check_transitivity(graph: pd.DataFrame) -> bool:
                 if graph.loc[i, j] != 1:
                     return False
     return True
+
+
+def get_edges(df: pd.DataFrame) -> List[Tuple[str, str]]:
+    tuples = []
+    for i, row in df.iterrows():
+        for col in df.columns:
+            if row[col] == 1:
+                tuples.append((str(i), str(col)))
+    return tuples
+
+
+def create_graph_from_matrix(preference: pd.DataFrame) -> plt.figure:
+    G = nx.DiGraph()
+    G.add_edges_from(get_edges(preference))
+    pos = nx.spring_layout(G)
+    nx.draw_networkx_labels(G, pos)
+    nx.draw_networkx_edges(G, pos, edge_color='black', arrows=True, arrowsize=30)
+    nx.draw_networkx_nodes(G, pos, cmap=plt.get_cmap('jet'), node_size=500)
+    return
