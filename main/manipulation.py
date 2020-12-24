@@ -128,6 +128,7 @@ class Manipulation:
             p_score = get_score_of_alternative_by_voter(self.preference, self.method, self.k, p)
 
             if self.k == len(self.preference) - 1:
+                raise NotImplementedError('this needs more work')
                 all_prefs = list(copy.deepcopy(self.all_preferences))
                 scores_of_alternatives = copy.deepcopy(self.scores_of_alternatives)
                 if self.method == 'approval' and winner_score == 1:

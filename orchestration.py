@@ -16,6 +16,7 @@ def main(args):
         alphabetical_order[i] = i
 
     data_to_use = all_data[(args.num_voters, args.num_alt, args.data_type)]
+    print(f'running {(args.num_voters, args.num_alt, args.data_type)}')
 
     if os.path.isfile('data/results/total_result.pkl'):
         with open('data/results/total_result.pkl', 'rb') as f:
