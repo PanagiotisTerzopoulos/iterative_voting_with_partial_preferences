@@ -55,7 +55,6 @@ def voting_iteration(
             break
         elif verbose:
             print(f'\nRandom voter chosen: {random_voter}')
-        random_voter = 7
         winner, possible_winners, scores_of_alternatives = evaluate_profile(
             graphs=current_profile, k=k, method=method, alphabetical_order=alphabetical_order
         )
