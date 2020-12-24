@@ -17,7 +17,7 @@ from iterative_voting.main.manipulation_utils import find_matrices_with_score, g
 from .data_processing import check_transitivity, evaluate_profile, get_score_of_alternative_by_voter, \
     get_winners_from_scores
 
-hard_exit_time_limit = 40
+hard_exit_time_limit = 1800
 
 
 class Manipulation:
