@@ -131,8 +131,8 @@ class Manipulation:
                 all_prefs = list(copy.deepcopy(self.all_preferences))
                 scores_of_alternatives = copy.deepcopy(self.scores_of_alternatives)
                 if self.method == 'approval' and winner_score == 1:
-                    scores_of_alternatives[str(p)] = 1
-
+                    if p_score == 0:
+                        scores_of_alternatives[str(p)] += 1
                     would_win = get_winners_from_scores(
                         scores_of_alternatives, self.alphabetical_order_of_alternatives
                     )[0] == p
@@ -145,30 +145,32 @@ class Manipulation:
                                 print(f'took total time {time.time() - self.init_total_time}')
                             return all_prefs, p
                         else:
-                            scores_of_alternatives[str(self.winner)] = 0
-                            would_win = get_winners_from_scores(
-                                scores_of_alternatives, self.alphabetical_order_of_alternatives
-                            )[0] == p
-                            if would_win:
-                                dft = all_prefs[self.preference_idx]
-                                if ((dft.loc[self.winner] == 0).sum() != 0 and
-                                    not self.do_additions) or ((dft.loc[self.winner] == 1).sum() != 0 and
-                                                               not self.do_flips):
-                                    continue
-                                else:
-                                    dft.loc[self.winner, :] = -1
-                                    dft.loc[:, self.winner] = 1
-                                    dft.loc[self.winner, self.winner] = 0
-
-                                    all_prefs[self.preference_idx] = dft
-                                    assert check_transitivity(dft)
-                                    winner, *_ = evaluate_profile(
-                                        all_prefs, self.k, self.method, self.alphabetical_order_of_alternatives
-                                    )
-                                    assert winner == p
-                                    return all_prefs, winner
-                            else:
+                            continue
+                    else:
+                        scores_of_alternatives[str(self.winner)] -= 1
+                        would_win = get_winners_from_scores(
+                            scores_of_alternatives, self.alphabetical_order_of_alternatives
+                        )[0] == p
+                        if would_win:
+                            dft = all_prefs[self.preference_idx]
+                            if ((dft.loc[self.winner] == 0).sum() != 0 and
+                                not self.do_additions) or ((dft.loc[self.winner] == 1).sum() != 0 and
+                                                           not self.do_flips):
                                 continue
+                            else:
+                                dft.loc[self.winner, :] = -1
+                                dft.loc[:, self.winner] = 1
+                                dft.loc[self.winner, self.winner] = 0
+
+                                all_prefs[self.preference_idx] = dft
+                                assert check_transitivity(dft)
+                                winner, *_ = evaluate_profile(
+                                    all_prefs, self.k, self.method, self.alphabetical_order_of_alternatives
+                                )
+                                assert winner == p
+                                return all_prefs, winner
+                        else:
+                            continue
 
                 elif self.method == 'veto':
                     raise NotImplementedError()
