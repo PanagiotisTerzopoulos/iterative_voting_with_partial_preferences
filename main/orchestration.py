@@ -1,5 +1,5 @@
 from copy import copy
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Union
 
 from main.data_processing import evaluate_profile
 from main.manipulation import Manipulation
@@ -19,7 +19,7 @@ def select_new_random_voter(failed, total_num, voter_to_exclude):
 
 def voting_iteration(
     all_preferences, verbose, k, method, alphabetical_order, do_additions, do_omissions, do_flips, cycle_limit
-) -> Tuple[bool, Dict[int, Tuple[int, int]]]:
+) -> Union[str, Tuple[bool, Dict[int, Tuple[int, int]]]]:
     """
     Full iteration per profile. 0 to many manipulations happens and ends either with convergence or not.
     Args:
@@ -34,7 +34,8 @@ def voting_iteration(
         cycle_limit:
 
     Returns:
-    (whether_convergence, {round: (winner, voter) for all rounds})
+    (whether_convergence, {round: (winner, voter) for all rounds}) or sring "hard_exit" if more than 30' passed
+    trying to converge on this profile.
     """
     current_profile = copy(
         all_preferences
@@ -45,6 +46,7 @@ def voting_iteration(
     res_dict = {}
     failed_manipulators = []
     manipulator_voter = None
+    hard_exit = False
     while True:
         random_voter = select_new_random_voter(failed_manipulators, len(all_preferences), manipulator_voter)
         if random_voter is None:
@@ -53,7 +55,7 @@ def voting_iteration(
             break
         elif verbose:
             print(f'\nRandom voter chosen: {random_voter}')
-
+        random_voter = 7
         winner, possible_winners, scores_of_alternatives = evaluate_profile(
             graphs=current_profile, k=k, method=method, alphabetical_order=alphabetical_order
         )
@@ -77,6 +79,9 @@ def voting_iteration(
         )
 
         result = man.manipulation_move()
+        if result == 'hard_exit':
+            return 'hard_exit'
+
         if result is not None:
             current_profile = result[0]
             res_dict[num_rounds] = (result[1], random_voter)

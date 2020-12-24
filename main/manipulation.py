@@ -17,6 +17,8 @@ from iterative_voting.main.manipulation_utils import find_matrices_with_score, g
 from .data_processing import check_transitivity, evaluate_profile, get_score_of_alternative_by_voter, \
     get_winners_from_scores
 
+hard_exit_time_limit = 40
+
 
 class Manipulation:
     """
@@ -105,13 +107,14 @@ class Manipulation:
         assert set(alternatives) == set(sorted_alternatives)
         return sorted_alternatives
 
-    def manipulation_move(self) -> Union[None, Tuple[List[pd.DataFrame], int]]:
+    def manipulation_move(self) -> Union[None, Tuple[List[pd.DataFrame], int], str]:
         """
         Main functionality which checks all the scenaria of possible manipulation of the result by the specific voter
         and if the voter manages to manipulate it returns the voter's updated preference, otherwise returns None.
 
         Returns:
             None if Manipulation cannot happen or the new profile and the winner in a tuple if manipulation happens.
+            Also if it takes more than 30' to work on this profile it returns a string saying "hard_exit"
         """
         # TODO: this function probably doesn't need to return the winner, just the new profile
         # alternatives_to_check are all the possible winners that the current voter truthfully prefers to the profile
@@ -134,12 +137,13 @@ class Manipulation:
                         scores_of_alternatives, self.alphabetical_order_of_alternatives
                     )[0] == p
                     if would_win:
-                        all_prefs, manipulation_happened, winner = self.tree_generation(p, potential_winners=[])
-
+                        all_prefs, manipulation_happened, hard_exit = self.tree_generation(p, potential_winners=[])
+                        if hard_exit:
+                            return 'hard_exit'
                         if manipulation_happened:
                             if self.verbose:
                                 print(f'took total time {time.time() - self.init_total_time}')
-                            return all_prefs, winner
+                            return all_prefs, p
                         else:
                             scores_of_alternatives[str(self.winner)] = 0
                             would_win = get_winners_from_scores(
@@ -201,12 +205,13 @@ class Manipulation:
                 would_win = get_winners_from_scores(scores_of_alternatives,
                                                     self.alphabetical_order_of_alternatives)[0] == p
                 if would_win:
-                    all_prefs, manipulation_happened, winner = self.tree_generation(p, potential_winners=[])
-
+                    all_prefs, manipulation_happened, hard_exit = self.tree_generation(p, potential_winners=[])
+                    if hard_exit:
+                        return 'hard_exit'
                     if manipulation_happened:
                         if self.verbose:
                             print(f'took total time {time.time() - self.init_total_time}')
-                        return all_prefs, winner
+                        return all_prefs, p
                 else:
                     continue
 
@@ -245,13 +250,15 @@ class Manipulation:
                     "note that the relevant cells, besides the alternative w, will also concern all other 
                     alternatives that have to have their scores lowered"
                     '''
-                    all_prefs, manipulation_happened, winner = self.tree_generation(
+                    all_prefs, manipulation_happened, hard_exit = self.tree_generation(
                         p, potential_winners=potential_winners
                     )
+                    if hard_exit:
+                        return 'hard_exit'
                     if manipulation_happened:
                         if self.verbose:
                             print(f'took total time {time.time() - self.init_total_time}')
-                        return all_prefs, winner
+                        return all_prefs, p
                     pass
 
             if p_score == 0 and winner_score == 1:
@@ -304,18 +311,20 @@ class Manipulation:
                     "note that the relevant cells, besides the alternative w, will also concern all other
                     alternatives that have to have their scores lowered"
                     '''
-                    all_prefs, manipulation_happened, winner = self.tree_generation(
+                    all_prefs, manipulation_happened, hard_exit = self.tree_generation(
                         p, potential_winners=potential_winners
                     )
+                    if hard_exit:
+                        return 'hard_exit'
                     if manipulation_happened:
                         if self.verbose:
                             print(f'took total time {time.time() - self.init_total_time}')
-                        return all_prefs, winner
+                        return all_prefs, p
                     pass  # continue with next alternative
 
         return None
 
-    def tree_generation(self, p, potential_winners: list = None):
+    def tree_generation(self, p, potential_winners: list = None) -> Tuple[List[pd.DataFrame], bool, bool]:
         """
         Given an alternative p that is a possible winner and is preferred by our voter to the current winner, we want
         to check whether the voter can make p win. In order to do this, we generate matrices that differ from the
@@ -332,7 +341,6 @@ class Manipulation:
         may induce a transitive matrix that makes p win in following levels.
 
         Returns:
-        ???
 
         """
         if self.verbose:
@@ -350,16 +358,15 @@ class Manipulation:
             do_omissions=self.do_omissions
         )
         self.all_generated_matrices += new_preferences
-        all_prefs, manipulation_happened, winner = self.check_if_manipulation_happened(all_prefs, new_preferences, p)
+        all_prefs, manipulation_happened = self.check_if_manipulation_happened(all_prefs, new_preferences, p)
         if not manipulation_happened:
             # since the direct one-cost children of the original didn't work, for every child generate the
             # 1-cost children and the 2-cost children from the previous matrix.
-            all_prefs, manipulation_happened, winner = self.tree_generation_level_1_onwards(
-                all_prefs, p, potential_winners
-            )
-        return all_prefs, manipulation_happened, winner
+            return self.tree_generation_level_1_onwards(all_prefs, p, potential_winners)
+        return all_prefs, manipulation_happened, False
 
-    def tree_generation_level_1_onwards(self, all_prefs: List[pd.DataFrame], p: int, potential_winners: list):
+    def tree_generation_level_1_onwards(self, all_prefs: List[pd.DataFrame], p: int,
+                                        potential_winners: list) -> Tuple[List[pd.DataFrame], bool, bool]:
         """
 
         """
@@ -383,19 +390,19 @@ class Manipulation:
                 1: (self.examine_matrices_cost_1, matrices_to_examine_cost_1)
             }
             order = random.randint(0, 1)
-            all_prefs, manipulation_happened, new_preferences, winner = func_to_use_first[order][0](
-                all_prefs, func_to_use_first[order][1], old_max_cost_so_far, p, potential_winners
+            all_prefs, manipulation_happened, new_preferences_1, hard_exit = func_to_use_first[order][0](
+                all_prefs, func_to_use_first[order][1], old_max_cost_so_far, p, potential_winners, init_time
             )
-            if manipulation_happened:
+            if manipulation_happened or hard_exit:
                 break
             order = 0 if order else 1
-            all_prefs, manipulation_happened, new_preferences, winner = func_to_use_first[order][0](
-                all_prefs, func_to_use_first[order][1], old_max_cost_so_far, p, potential_winners
+            all_prefs, manipulation_happened, new_preferences_2, hard_exit = func_to_use_first[order][0](
+                all_prefs, func_to_use_first[order][1], old_max_cost_so_far, p, potential_winners, init_time
             )
-            if manipulation_happened:
+            if manipulation_happened or hard_exit:
                 break
 
-            self.all_generated_matrices += new_preferences
+            self.all_generated_matrices += new_preferences_1 + new_preferences_2
             # We exit the while loop  naturally when all relevant cells (resulting from each relevant
             # alternatives) have been changed and no manipulation happened
             if self.all_generated_matrices:
@@ -407,9 +414,12 @@ class Manipulation:
                 print(f'iteration took {time.time() - init_time} sec.')
             if new_max_cost_so_far == old_max_cost_so_far:
                 break
-        return all_prefs, manipulation_happened, winner
+        return all_prefs, manipulation_happened, hard_exit
 
-    def examine_matrices_cost_2(self, all_prefs, matrices_to_examine_cost_2, old_max_cost_so_far, p, potential_winners):
+    def examine_matrices_cost_2(
+        self, all_prefs, matrices_to_examine_cost_2, old_max_cost_so_far, p, potential_winners, init_time: float
+    ) -> Tuple[List[pd.DataFrame], bool, List[Tuple[int, list, pd.DataFrame]], bool]:
+        hard_exit = False  # stop and totally discard the profile cause it takes too much time
         if self.verbose:
             print('in examine_matrices_cost_2')
         new_preferences = []
@@ -425,15 +435,22 @@ class Manipulation:
                 matrices_not_to_generate=[x[2] for x in self.all_generated_matrices],
                 do_flips=self.do_flips
             )
+        if time.time() - init_time > hard_exit_time_limit:
+            print('skipping profile due to slowness')
+            return all_prefs, False, [], True
+
         if self.verbose:
             print(f'all generated matrices so far {len(self.all_generated_matrices)}')
-        all_prefs, manipulation_happened, winner = self.check_if_manipulation_happened(all_prefs, new_preferences, p)
-        return all_prefs, manipulation_happened, new_preferences, winner
+        all_prefs, manipulation_happened = self.check_if_manipulation_happened(all_prefs, new_preferences, p)
+        return all_prefs, manipulation_happened, new_preferences, hard_exit
 
-    def examine_matrices_cost_1(self, all_prefs, matrices_to_examine_cost_1, old_max_cost_so_far, p, potential_winners):
+    def examine_matrices_cost_1(
+        self, all_prefs, matrices_to_examine_cost_1, old_max_cost_so_far, p, potential_winners, init_time: float
+    ) -> Tuple[List[pd.DataFrame], bool, List[Tuple[int, list, pd.DataFrame]], bool]:
         if self.verbose:
             print('in examine_matrices_cost_1')
         new_preferences = []
+        hard_exit = False  # stop and totally discard the profile cause it takes too much time
         for parent_mat_1 in matrices_to_examine_cost_1:
             index_of_p, index_of_w, relevant_cells = get_children_generation_options(self.winner, p, parent_mat_1)
             new_preferences += one_cost_children_generation(
@@ -447,19 +464,22 @@ class Manipulation:
                 do_omissions=self.do_omissions,
                 do_additions=self.do_additions
             )
+
+            if time.time() - init_time > hard_exit_time_limit:
+                print('skipping profile due to slowness')
+                return all_prefs, False, [], True
+
         if self.verbose:
             print(f'all generated matrices so far {len(self.all_generated_matrices)}')
-        all_prefs, manipulation_happened, winner = self.check_if_manipulation_happened(all_prefs, new_preferences, p)
-        return all_prefs, manipulation_happened, new_preferences, winner
+        all_prefs, manipulation_happened = self.check_if_manipulation_happened(all_prefs, new_preferences, p)
+        return all_prefs, manipulation_happened, new_preferences, hard_exit
 
     def check_if_manipulation_happened(
         self, all_prefs: List[pd.DataFrame], new_preferences: List[Tuple[int, list, pd.DataFrame]], p: int
-    ) -> Tuple[List[pd.DataFrame], bool, int]:
+    ) -> Tuple[List[pd.DataFrame], bool]:
         """
 
         """
-        manipulation_happened = False
-        winner = None
         all_prefs_tmp = copy.deepcopy(all_prefs)
         for pref_cost, _, pref in new_preferences:
             all_prefs_tmp[self.preference_idx] = pref
@@ -472,6 +492,5 @@ class Manipulation:
             if winner == p and check_transitivity(pref):
                 if self.verbose:
                     print('Manipulation happened!')
-                manipulation_happened = True
-                break
-        return all_prefs_tmp, manipulation_happened, winner
+                return all_prefs_tmp, True
+        return all_prefs, False

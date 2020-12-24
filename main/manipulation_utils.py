@@ -159,18 +159,18 @@ def one_cost_children_generation(
                 else:
                     order = random.randint(0, 1)
                     if order == 0:
-                        do_additions_func(
-                            children_matrices, col, cost_of_parent_matrix, do_additions, parent_matrix, row
+                        children_matrices += do_additions_func(
+                            col, cost_of_parent_matrix, do_additions, parent_matrix, row
                         )
-                        do_omissions_func(
-                            children_matrices, col, cost_of_parent_matrix, do_omissions, parent_matrix, row
+                        children_matrices += do_omissions_func(
+                            col, cost_of_parent_matrix, do_omissions, parent_matrix, row
                         )
                     else:
-                        do_omissions_func(
-                            children_matrices, col, cost_of_parent_matrix, do_omissions, parent_matrix, row
+                        children_matrices += do_omissions_func(
+                            col, cost_of_parent_matrix, do_omissions, parent_matrix, row
                         )
-                        do_additions_func(
-                            children_matrices, col, cost_of_parent_matrix, do_additions, parent_matrix, row
+                        children_matrices += do_additions_func(
+                            col, cost_of_parent_matrix, do_additions, parent_matrix, row
                         )
 
     if matrices_not_to_generate:
@@ -179,16 +179,21 @@ def one_cost_children_generation(
         return children_matrices
 
 
-def do_omissions_func(children_matrices, col, cost_of_parent_matrix, do_omissions, parent_matrix, row):
+def do_omissions_func(col, cost_of_parent_matrix, do_omissions, parent_matrix,
+                      row) -> List[Tuple[int, list, pd.DataFrame]]:
+    children_matrices = []
     if (parent_matrix.loc[row, col] == 1 or parent_matrix.loc[row, col] == -1) and do_omissions:
         new_matrix = copy.copy(parent_matrix)
         new_matrix.loc[row, col] = 0
         new_matrix.loc[col, row] = 0  # symmetry constraint
 
         children_matrices.append((cost_of_parent_matrix + 1, [row], new_matrix))
+    return children_matrices
 
 
-def do_additions_func(children_matrices, col, cost_of_parent_matrix, do_additions, parent_matrix, row):
+def do_additions_func(col, cost_of_parent_matrix, do_additions, parent_matrix,
+                      row) -> List[Tuple[int, list, pd.DataFrame]]:
+    children_matrices = []
     if parent_matrix.loc[row, col] == 0 and do_additions:
         new_matrix = copy.copy(parent_matrix)
         new_matrix.loc[row, col] = 1
@@ -201,6 +206,7 @@ def do_additions_func(children_matrices, col, cost_of_parent_matrix, do_addition
         new_matrix.loc[col, row] = 1  # symmetry constraint
 
         children_matrices.append((cost_of_parent_matrix + 1, [row], new_matrix))
+    return children_matrices
 
 
 def two_cost_children_generation(
