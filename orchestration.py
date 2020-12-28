@@ -16,7 +16,7 @@ def main(args):
         alphabetical_order[i] = i
 
     data_to_use = all_data[(args.num_voters, args.num_alt, args.data_type)]
-    print(f'running {(args.num_voters, args.num_alt, args.data_type)}')
+    print(f'running {args}')
 
     if os.path.isfile('data/results/total_result.pkl'):
         with open('data/results/total_result.pkl', 'rb') as f:
@@ -29,21 +29,29 @@ def main(args):
     for random_profile in tqdm(prof_indices_to_run, desc='random profiles'):
         all_preferences = data_to_use[random_profile]
         for meta_counter in range(args.num_iterations):
-            result = voting_iteration(
-                all_preferences, args.verbose, args.k, args.method, alphabetical_order, args.do_additions,
-                args.do_omissions, args.do_flips, args.cycle_limit
-            )
-            if result == 'hard_exit':
-                break
-            else:
-                convergence_happened, res_dict = result
-                total_result[(
-                    args.num_alt, args.num_voters, args.data_type, random_profile, args.k, args.method,
-                    args.cycle_limit, meta_counter, args.do_additions, args.do_omissions, args.do_flips
-                )] = (convergence_happened, res_dict)
+            if (
+                args.num_alt, args.num_voters, args.data_type, random_profile, args.k, args.method, args.cycle_limit,
+                meta_counter, args.do_additions, args.do_omissions, args.do_flips
+            ) not in total_result.keys():
+                result = voting_iteration(
+                    all_preferences, args.verbose, args.k, args.method, alphabetical_order, args.do_additions,
+                    args.do_omissions, args.do_flips, args.cycle_limit
+                )
+                if result == 'hard_exit':
+                    total_result[(
+                        args.num_alt, args.num_voters, args.data_type, random_profile, args.k, args.method,
+                        args.cycle_limit, meta_counter, args.do_additions, args.do_omissions, args.do_flips
+                    )] = 'hard_exit'
+                    break
+                else:
+                    convergence_happened, res_dict = result
+                    total_result[(
+                        args.num_alt, args.num_voters, args.data_type, random_profile, args.k, args.method,
+                        args.cycle_limit, meta_counter, args.do_additions, args.do_omissions, args.do_flips
+                    )] = (convergence_happened, res_dict)
 
-    with open('data/results/total_result.pkl', 'wb') as f:
-        dill.dump(total_result, f)
+        with open('data/results/total_result.pkl', 'wb') as f:
+            dill.dump(total_result, f)
 
 
 if __name__ == '__main__':
