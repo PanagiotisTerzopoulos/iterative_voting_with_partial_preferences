@@ -46,7 +46,6 @@ def voting_iteration(
     res_dict = {}
     failed_manipulators = []
     manipulator_voter = None
-    hard_exit = False
     while True:
         random_voter = select_new_random_voter(failed_manipulators, len(all_preferences), manipulator_voter)
         if random_voter is None:
