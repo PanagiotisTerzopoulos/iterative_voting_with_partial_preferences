@@ -6,11 +6,16 @@ from tqdm import tqdm
 
 from main.orchestration import voting_iteration
 
-with open(f'data/our_data.pkl', 'rb') as f:
-    all_data = dill.load(f)
-
 
 def main(args):
+
+    if args.complete_profiles:
+        suffix = '_complete'
+    else:
+        suffix = '_incomplete'
+    with open(f'data/our_data{suffix}.pkl', 'rb') as f:
+        all_data = dill.load(f)
+
     alphabetical_order = {}
     for i in range(args.num_alt):
         alphabetical_order[i] = i
@@ -81,6 +86,7 @@ if __name__ == '__main__':
     parser.add_argument('--retry_slow_ones', type=bool, default=False)
     parser.add_argument('--time_limit', type=int, default=900)
     parser.add_argument('--overwrite', type=bool, default=False)
+    parser.add_argument('--complete_profiles', type=bool, default=False)
 
     args = parser.parse_args()
     assert args.k <= args.num_alt
