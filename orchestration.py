@@ -36,7 +36,7 @@ def main(args):
         for meta_counter in range(args.num_iterations):
             key = (
                 args.num_alt, args.num_voters, args.data_type, random_profile, args.k, args.method, args.cycle_limit,
-                meta_counter, args.do_additions, args.do_omissions, args.do_flips
+                meta_counter, args.do_additions, args.do_omissions, args.do_flips, args.complete_profiles
             )
             calculate_it = False
             if key not in total_result.keys():
@@ -59,10 +59,7 @@ def main(args):
                     break
                 else:
                     convergence_happened, res_dict = result
-                    total_result[(
-                        args.num_alt, args.num_voters, args.data_type, random_profile, args.k, args.method,
-                        args.cycle_limit, meta_counter, args.do_additions, args.do_omissions, args.do_flips
-                    )] = (convergence_happened, res_dict)
+                    total_result[key] = (convergence_happened, res_dict)
 
                 with open('data/results/total_result.pkl', 'wb') as f:
                     dill.dump(total_result, f)
