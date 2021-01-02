@@ -120,12 +120,16 @@ class Manipulation:
         # TODO: this function probably doesn't need to return the winner, just the new profile
         # alternatives_to_check are all the possible winners that the current voter truthfully prefers to the profile
         # winner (self.w)
+        if self.verbose:
+            print('Starting manipulation move')
         alternatives_to_check = [
             x for x in self.possible_winners if self.truthful_profile[self.preference_idx].loc[x, self.winner] == 1
         ]
         sorted_alternatives = self.get_alternatives_order(alternatives_to_check)
         winner_score = get_score_of_alternative_by_voter(self.preference, self.method, self.k, self.winner)
         for p in sorted_alternatives:
+            if self.verbose:
+                print(f'investigating alternative {p}')
             p_score = get_score_of_alternative_by_voter(self.preference, self.method, self.k, p)
 
             if self.k == len(self.preference) - 1:
@@ -200,9 +204,13 @@ class Manipulation:
                     #     continue
 
             if p_score == 1 and winner_score == 0:
+                if self.verbose:
+                    print(f'p_score={p_score}, winner_score={winner_score}')
                 continue
 
             if p_score == 0 and winner_score == 0:
+                if self.verbose:
+                    print(f'p_score={p_score}, winner_score={winner_score}')
                 scores_of_alternatives = copy.deepcopy(self.scores_of_alternatives)
                 # check whether p would win with score 1
                 scores_of_alternatives[str(p)] += 1
@@ -220,6 +228,8 @@ class Manipulation:
                     continue
 
             if p_score == 1 and winner_score == 1:
+                if self.verbose:
+                    print(f'p_score={p_score}, winner_score={winner_score}')
                 # check whether p would win if winner had score 0
                 scores_of_alternatives = copy.deepcopy(self.scores_of_alternatives)
                 scores_of_alternatives[str(self.winner)] -= 1
@@ -266,6 +276,8 @@ class Manipulation:
                     pass
 
             if p_score == 0 and winner_score == 1:
+                if self.verbose:
+                    print(f'p_score={p_score}, winner_score={winner_score}')
                 # The logic of this section is the same as above
                 # check whether p would win if winner had score 0
 
@@ -274,7 +286,6 @@ class Manipulation:
                 potential_winners = [
                     get_winners_from_scores(scores_of_alternatives, self.alphabetical_order_of_alternatives)[0]
                 ]
-
                 continue_with_next_alternative = False
                 while potential_winners[-1] != p:
                     if get_score_of_alternative_by_voter(
@@ -286,7 +297,7 @@ class Manipulation:
                         )[0]
                         if p_increased_potential_winner != p:
                             continue_with_next_alternative = True
-                            break
+                        break
                     else:
                         # check whether p would win if possible_winner (say x) had score 0
                         scores_of_alternatives[str(potential_winners[-1])] -= 1
@@ -301,7 +312,7 @@ class Manipulation:
                             )[0]
                             if p_increased_potential_winner != p:
                                 continue_with_next_alternative = True
-                                break
+                            break
                         else:
                             potential_winners.append(new_potential_winner)
 
