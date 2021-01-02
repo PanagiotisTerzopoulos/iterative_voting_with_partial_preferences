@@ -52,10 +52,7 @@ def main(args):
                     args.do_omissions, args.do_flips, args.cycle_limit, args.time_limit
                 )
                 if result == 'hard_exit':
-                    total_result[(
-                        args.num_alt, args.num_voters, args.data_type, random_profile, args.k, args.method,
-                        args.cycle_limit, meta_counter, args.do_additions, args.do_omissions, args.do_flips
-                    )] = 'hard_exit'
+                    total_result[key] = 'hard_exit'
                     break
                 else:
                     convergence_happened, res_dict = result
