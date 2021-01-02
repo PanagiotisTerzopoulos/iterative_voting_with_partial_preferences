@@ -29,13 +29,19 @@ def main(args):
     for random_profile in tqdm(prof_indices_to_run, desc='random profiles'):
         all_preferences = data_to_use[random_profile]
         for meta_counter in range(args.num_iterations):
-            if (
+            key = (
                 args.num_alt, args.num_voters, args.data_type, random_profile, args.k, args.method, args.cycle_limit,
                 meta_counter, args.do_additions, args.do_omissions, args.do_flips
-            ) not in total_result.keys():
+            )
+            calculate_it = False
+            if key not in total_result.keys():
+                calculate_it = True
+            elif total_result[key] == 'hard_exit' and args.retry_slow_ones:
+                calculate_it = True
+            if calculate_it:
                 result = voting_iteration(
                     all_preferences, args.verbose, args.k, args.method, alphabetical_order, args.do_additions,
-                    args.do_omissions, args.do_flips, args.cycle_limit
+                    args.do_omissions, args.do_flips, args.cycle_limit, args.time_limit
                 )
                 if result == 'hard_exit':
                     total_result[(
@@ -69,6 +75,8 @@ if __name__ == '__main__':
     parser.add_argument('--do_omissions', type=bool, default=True)
     parser.add_argument('--do_flips', type=bool, default=True)
     parser.add_argument('--verbose', type=bool, default=False)
+    parser.add_argument('--retry_slow_ones', type=bool, default=False)
+    parser.add_argument('--time_limit', type=int, default=900)
 
     args = parser.parse_args()
     assert args.k <= args.num_alt

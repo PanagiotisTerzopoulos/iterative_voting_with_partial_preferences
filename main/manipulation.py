@@ -18,8 +18,6 @@ from iterative_voting.main.manipulation_utils import find_matrices_with_score, g
 from .data_processing import check_transitivity, evaluate_profile, get_score_of_alternative_by_voter, \
     get_winners_from_scores
 
-hard_exit_time_limit = 900
-
 
 class Manipulation:
     """
@@ -53,7 +51,8 @@ class Manipulation:
         do_additions: bool,
         do_omissions: bool,
         do_flips: bool,
-        verbose: bool
+        verbose: bool,
+        hard_exit_time_limit: int
     ):
         self.init_total_time = time.time()
         self.all_preferences = all_preferences  # These are the preferences of all the voters in a list,
@@ -76,6 +75,7 @@ class Manipulation:
         self.do_omissions = do_omissions
         self.do_flips = do_flips
         self.verbose = verbose  # whether to print debugging messages or not.
+        self.hard_exit_time_limit = hard_exit_time_limit
 
     def check_for_possible_manipulation(self) -> bool:
         """
@@ -439,7 +439,7 @@ class Manipulation:
                 matrices_not_to_generate=[x[2] for x in self.all_generated_matrices],
                 do_flips=self.do_flips
             )
-        if time.time() - init_time > hard_exit_time_limit:
+        if time.time() - init_time > self.hard_exit_time_limit:
             print('skipping profile due to slowness')
             return all_prefs, False, [], True
 
@@ -469,7 +469,7 @@ class Manipulation:
                 do_additions=self.do_additions
             )
 
-            if time.time() - init_time > hard_exit_time_limit:
+            if time.time() - init_time > self.hard_exit_time_limit:
                 print('skipping profile due to slowness')
                 return all_prefs, False, [], True
 

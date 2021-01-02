@@ -18,7 +18,8 @@ def select_new_random_voter(failed, total_num, voter_to_exclude):
 
 
 def voting_iteration(
-    all_preferences, verbose, k, method, alphabetical_order, do_additions, do_omissions, do_flips, cycle_limit
+    all_preferences, verbose, k, method, alphabetical_order, do_additions, do_omissions, do_flips, cycle_limit,
+    time_limit
 ) -> Union[str, Tuple[bool, Dict[int, Tuple[int, int]]]]:
     """
     Full iteration per profile. 0 to many manipulations happens and ends either with convergence or not.
@@ -32,6 +33,7 @@ def voting_iteration(
         do_omissions:
         do_flips:
         cycle_limit:
+        time_limit:
 
     Returns:
     (whether_convergence, {round: (winner, voter) for all rounds}) or sring "hard_exit" if more than 30' passed
@@ -73,7 +75,8 @@ def voting_iteration(
             do_additions=do_additions,
             do_omissions=do_omissions,
             do_flips=do_flips,
-            verbose=verbose
+            verbose=verbose,
+            hard_exit_time_limit=time_limit
         )
 
         result = man.manipulation_move()
