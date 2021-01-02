@@ -7,9 +7,10 @@ from typing import List, Tuple, Union
 
 import pandas as pd
 
+# TODO: fix this
 curr_path = os.path.realpath(__file__)
-if curr_path.split('\iterative_voting\main')[0] not in sys.path:
-    sys.path.append(curr_path.split('\iterative_voting\main')[0])
+if curr_path.split('/iterative_voting/main')[0] not in sys.path:
+    sys.path.append(curr_path.split('/iterative_voting/main')[0])
 
 from iterative_voting.main.manipulation_utils import find_matrices_with_score, get_children_generation_options, \
     one_cost_children_generation, \
