@@ -38,6 +38,9 @@ def main(args):
                 calculate_it = True
             elif total_result[key] == 'hard_exit' and args.retry_slow_ones:
                 calculate_it = True
+            elif args.overwrite:
+                calculate_it = True
+
             if calculate_it:
                 result = voting_iteration(
                     all_preferences, args.verbose, args.k, args.method, alphabetical_order, args.do_additions,
@@ -56,8 +59,8 @@ def main(args):
                         args.cycle_limit, meta_counter, args.do_additions, args.do_omissions, args.do_flips
                     )] = (convergence_happened, res_dict)
 
-        with open('data/results/total_result.pkl', 'wb') as f:
-            dill.dump(total_result, f)
+                with open('data/results/total_result.pkl', 'wb') as f:
+                    dill.dump(total_result, f)
 
 
 if __name__ == '__main__':
@@ -77,6 +80,7 @@ if __name__ == '__main__':
     parser.add_argument('--verbose', type=bool, default=False)
     parser.add_argument('--retry_slow_ones', type=bool, default=False)
     parser.add_argument('--time_limit', type=int, default=900)
+    parser.add_argument('--overwrite', type=bool, default=False)
 
     args = parser.parse_args()
     assert args.k <= args.num_alt
