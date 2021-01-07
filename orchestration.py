@@ -23,8 +23,8 @@ def main(args):
     data_to_use = all_data[(args.num_voters, args.num_alt, args.data_type)]
     print(f'running {args}')
 
-    if os.path.isfile('data/results/total_result.pkl'):
-        with open('data/results/total_result.pkl', 'rb') as f:
+    if os.path.isfile('data/results/total_result_veto_4.pkl'):
+        with open('data/results/total_result_veto_4.pkl', 'rb') as f:
             total_result = dill.load(f)
     else:
         total_result = {}
@@ -58,7 +58,7 @@ def main(args):
                     convergence_happened, res_dict = result
                     total_result[key] = (convergence_happened, res_dict)
 
-                with open('data/results/total_result.pkl', 'wb') as f:
+                with open('data/results/total_result_veto_4.pkl', 'wb') as f:
                     dill.dump(total_result, f)
 
 
