@@ -91,3 +91,10 @@ def create_graph_from_matrix(preference: pd.DataFrame) -> plt.figure:
     nx.draw_networkx_edges(G, pos, edge_color='black', arrows=True, arrowsize=30)
     nx.draw_networkx_nodes(G, pos, cmap=plt.get_cmap('jet'), node_size=500)
     return
+
+
+def get_social_welfare_of_alternative(profile: List[pd.DataFrame], alt: int):
+    social_welfare = 0
+    for vot in profile:
+        social_welfare += ((vot.loc[alt] == 1).sum() - (vot.loc[alt] == -1).sum())
+    return social_welfare
