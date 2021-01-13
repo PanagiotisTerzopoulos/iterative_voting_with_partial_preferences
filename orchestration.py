@@ -32,7 +32,6 @@ def main(args):
 
     for random_profile in tqdm(prof_indices_to_run, desc='random profiles'):
         all_preferences = data_to_use[random_profile]
-        break_the_same_profile_iteration = False
         for meta_counter in range(args.num_iterations):
             key = (
                 args.num_alt, args.num_voters, args.data_type, random_profile, args.k, args.method, args.cycle_limit,
@@ -53,20 +52,18 @@ def main(args):
                 )
                 if result == 'hard_exit':
                     total_result[key] = 'hard_exit'
+                    with open('data/results/total_result.pkl', 'wb') as f:
+                        dill.dump(total_result, f)
                     break
                 else:
                     convergence_happened, res_dict = result
                     total_result[key] = (convergence_happened, res_dict)
-                    if res_dict.keys().max() == 0:
-                        # if it cannot manipulate for this profile then it doesn't make sense running the profile
-                        # multiple times cause the random order doesn't play a role
-                        break_the_same_profile_iteration = True
-
-                with open('data/results/total_result.pkl', 'wb') as f:
-                    dill.dump(total_result, f)
-
-            if break_the_same_profile_iteration:
-                break
+                    # if it cannot manipulate for this profile then it doesn't make sense running the profile
+                    # multiple times cause the random order doesn't play a role
+                    with open('data/results/total_result.pkl', 'wb') as f:
+                        dill.dump(total_result, f)
+                    if not res_dict:
+                        break
 
 
 if __name__ == '__main__':

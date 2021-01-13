@@ -366,6 +366,7 @@ class Manipulation:
             parent_matrix=self.preference,
             cost_of_parent_matrix=0,  # this is always the beggining of the tree so the initial cost is 0
             alternatives_of_interest=list(set([p, self.winner] + potential_winners)),
+            alternatives_of_only_useful_changes=list(set([p, self.winner] + potential_winners)),
             index_of_p=p,
             index_of_w=self.winner,
             rule=self.method,
@@ -444,6 +445,7 @@ class Manipulation:
                 parent_matrix=parent_mat_2[2],
                 cost_of_parent_matrix=old_max_cost_so_far - 1,
                 alternatives_of_interest=list(set(relevant_cells + potential_winners)),
+                alternatives_of_only_useful_changes=potential_winners,
                 index_of_p=index_of_p,
                 index_of_w=index_of_w,
                 rule=self.method,
@@ -471,7 +473,9 @@ class Manipulation:
             new_preferences += one_cost_children_generation(
                 parent_matrix=parent_mat_1[2],
                 cost_of_parent_matrix=old_max_cost_so_far,
-                alternatives_of_interest=list(set(relevant_cells + potential_winners)),
+                alternatives_of_interest=list(set(relevant_cells + potential_winners)),  # potential winners should be
+                # treated differently than relevant cells.
+                alternatives_of_only_useful_changes=potential_winners,
                 index_of_p=index_of_p,
                 index_of_w=index_of_w,
                 rule=self.method,

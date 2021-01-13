@@ -13,10 +13,10 @@ def useful_change(
 ) -> Union[List[pd.DataFrame], None]:
     """
     Gets a parent matrix and creates its child for the case of the relevant change concerning either the possible
-    winner p or the current winner w.
+    winner p, the current winner w or any a potential winner (for which we make the same useful change as we do for w).
     Args:
         parent_matrix: The matrix to change
-        index: The index of the dataframe that corresponds to the row of either p or w.
+        index: The index of the dataframe that corresponds to the alternative for which to make the useful change.
         col: The column we are at when this function is called.
         type_of_alternative: Either 'p' or 'w'
         rule: Either 'approval' or 'veto'. This is needed cause the useful change is different in its case.
@@ -84,6 +84,7 @@ def one_cost_children_generation(
     parent_matrix: pd.DataFrame,
     cost_of_parent_matrix: int,
     alternatives_of_interest: List[int],
+    alternatives_of_only_useful_changes: List[int],
     index_of_p: int = None,
     index_of_w: int = None,
     rule: str = None,
@@ -100,6 +101,7 @@ def one_cost_children_generation(
         what happens when their value changes). These include the possible winner, the winner, the cells that
         were relevant in the parent and for the non-transitive matrices the cells that involve an alternative
         that had to do with a change also become relevant.
+        alternatives_of_only_useful_changes: Only useful changes will be done for these alternatives
         index_of_p: If the index of possible winner is provided only the useful changes will be done for this row.
         index_of_w: If the index of the winner is provided only the useful changes will be done for this row.
         rule: Either "approval" or "veto". Only relevant if index_of_p or index_of_w is provided.
@@ -118,6 +120,7 @@ def one_cost_children_generation(
         assert rule in ['veto', 'approval']
     assert do_additions is not None
     assert do_omissions is not None
+    assert set(alternatives_of_only_useful_changes).issubset(set(alternatives_of_interest))
 
     relevant_rows = parent_matrix.index.isin(alternatives_of_interest)
     children_matrices = []
@@ -127,7 +130,7 @@ def one_cost_children_generation(
                 if row == index_of_p:
                     new_matrices = useful_change(
                         parent_matrix=parent_matrix,
-                        index=index_of_p,
+                        index=row,
                         col=col,
                         type_of_alternative='p',
                         rule=rule,
@@ -140,10 +143,10 @@ def one_cost_children_generation(
                         children_matrices += [
                             (cost_of_parent_matrix + 1, [index_of_w], new_matrix) for new_matrix in new_matrices
                         ]
-                elif row == index_of_w:
+                elif row == index_of_w or row in alternatives_of_only_useful_changes:
                     new_matrices = useful_change(
                         parent_matrix=parent_matrix,
-                        index=index_of_w,
+                        index=row,
                         col=col,
                         type_of_alternative='w',
                         rule=rule,
@@ -213,6 +216,7 @@ def two_cost_children_generation(
     parent_matrix: pd.DataFrame,
     cost_of_parent_matrix: int,
     alternatives_of_interest: List[int],
+    alternatives_of_only_useful_changes: List[int],
     index_of_p: int = None,
     index_of_w: int = None,
     rule: str = None,
@@ -228,6 +232,7 @@ def two_cost_children_generation(
         what happens when their value changes). These include the possible winner, the winner, the cells that
         were relevant in the parent and for the non-transitive matrices the cells that involve an alternative
         that had to do with a change also become relevant.
+        alternatives_of_only_useful_changes: Only useful changes will be done for these alternatives
         index_of_p: If the index of possible winner is provided only the useful changes will be done for this row.
         index_of_w: If the index of the winner is provided only the useful changes will be done for this row.
         rule: Either "approval" or "veto". Only relevant if index_of_p or index_of_w is provided.
@@ -244,6 +249,7 @@ def two_cost_children_generation(
     #  don't need at all the "matrices_not_to_generate" in this case.
     if index_of_w or index_of_p:
         assert rule in ['veto', 'approval']
+    assert set(alternatives_of_only_useful_changes).issubset(set(alternatives_of_interest))
 
     relevant_rows = parent_matrix.index.isin(alternatives_of_interest)
     children_matrices = []
@@ -253,7 +259,7 @@ def two_cost_children_generation(
                 if row == index_of_p:
                     new_matrices = useful_change(
                         parent_matrix=parent_matrix,
-                        index=index_of_p,
+                        index=row,
                         col=col,
                         type_of_alternative='p',
                         rule=rule,
@@ -266,10 +272,10 @@ def two_cost_children_generation(
                         children_matrices += [
                             (cost_of_parent_matrix + 2, [index_of_p], new_matrix) for new_matrix in new_matrices
                         ]
-                elif row == index_of_w:
+                elif row == index_of_w or row in alternatives_of_only_useful_changes:
                     new_matrices = useful_change(
                         parent_matrix=parent_matrix,
-                        index=index_of_w,
+                        index=row,
                         col=col,
                         type_of_alternative='w',
                         rule=rule,
