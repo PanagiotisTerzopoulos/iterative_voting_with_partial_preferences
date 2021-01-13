@@ -133,75 +133,111 @@ class Manipulation:
             p_score = get_score_of_alternative_by_voter(self.preference, self.method, self.k, p)
 
             if self.k == len(self.preference) - 1:
-                raise NotImplementedError('this needs more work')
+
                 all_prefs = list(copy.deepcopy(self.all_preferences))
                 scores_of_alternatives = copy.deepcopy(self.scores_of_alternatives)
-                if self.method == 'approval' and winner_score == 1:
-                    if p_score == 0:
+
+                if self.method == 'approval':
+                    if winner_score == 0:
+                        continue
+                    else:  # winner_score = 1
+                        if p_score == 1:
+                            scores_of_alternatives[str(self.winner)] -= 1
+                            would_win = get_winners_from_scores(
+                                scores_of_alternatives, self.alphabetical_order_of_alternatives
+                            )[0] == p
+                            if would_win:
+                                dft = all_prefs[self.preference_idx]
+                                if ((dft.loc[self.winner] == 0).sum() != 0 and
+                                    not self.do_additions) or ((dft.loc[self.winner] == 1).sum() != 0 and
+                                                               not self.do_flips):
+                                    continue
+                                else:
+                                    winner = self.put_winner_on_bottom(all_prefs, dft, p)
+                                    return all_prefs, winner
+                            else:
+                                continue
+                        # we are here if p_score == 0 (cause p_score != 1)
                         scores_of_alternatives[str(p)] += 1
-                    would_win = get_winners_from_scores(
-                        scores_of_alternatives, self.alphabetical_order_of_alternatives
-                    )[0] == p
-                    if would_win:
-                        all_prefs, manipulation_happened, hard_exit = self.tree_generation(p, potential_winners=[])
-                        if hard_exit:
-                            return 'hard_exit'
-                        if manipulation_happened:
-                            if self.verbose:
-                                print(f'took total time {time.time() - self.init_total_time}')
-                            return all_prefs, p
+                        would_win = get_winners_from_scores(
+                            scores_of_alternatives, self.alphabetical_order_of_alternatives
+                        )[0] == p
+                        if would_win:
+                            all_prefs, manipulation_happened, hard_exit = self.tree_generation(p, potential_winners=[])
+                            if hard_exit:
+                                return 'hard_exit'
+                            if manipulation_happened:
+                                if self.verbose:
+                                    print(f'took total time {time.time() - self.init_total_time}')
+                                return all_prefs, p
+                            else:
+                                continue
                         else:
-                            continue
-                    else:
+                            scores_of_alternatives[str(self.winner)] -= 1
+                            would_win = get_winners_from_scores(
+                                scores_of_alternatives, self.alphabetical_order_of_alternatives
+                            )[0] == p
+                            if would_win:
+                                dft = all_prefs[self.preference_idx]
+                                if ((dft.loc[self.winner] == 0).sum() != 0 and
+                                    not self.do_additions) or ((dft.loc[self.winner] == 1).sum() != 0 and
+                                                               not self.do_flips):
+                                    continue
+                                else:
+                                    winner = self.put_winner_on_bottom(all_prefs, dft, p)
+                                    return all_prefs, winner
+                            else:
+                                continue
+
+                else:
+                    if p_score == 1:
+                        continue
+                    else:  # p_score = 0
+                        if winner_score == 0:
+                            scores_of_alternatives[str(p)] += 1
+                            would_win = get_winners_from_scores(
+                                scores_of_alternatives, self.alphabetical_order_of_alternatives
+                            )[0] == p
+                            if would_win:
+                                dft = all_prefs[self.preference_idx]
+                                if ((dft.loc[p] == 0).sum() != 0 and
+                                    not self.do_additions) or ((dft.loc[p] == -1).sum() != 0 and not self.do_flips):
+                                    continue
+                                else:
+                                    winner = self.put_p_on_top(all_prefs, dft, p)
+                                    return all_prefs, winner
+                            else:
+                                continue
+                        # we are here if w_score == 1 (cause w_score != 0)
                         scores_of_alternatives[str(self.winner)] -= 1
                         would_win = get_winners_from_scores(
                             scores_of_alternatives, self.alphabetical_order_of_alternatives
                         )[0] == p
                         if would_win:
-                            dft = all_prefs[self.preference_idx]
-                            if ((dft.loc[self.winner] == 0).sum() != 0 and
-                                not self.do_additions) or ((dft.loc[self.winner] == 1).sum() != 0 and
-                                                           not self.do_flips):
-                                continue
+                            all_prefs, manipulation_happened, hard_exit = self.tree_generation(p, potential_winners=[])
+                            if hard_exit:
+                                return 'hard_exit'
+                            if manipulation_happened:
+                                if self.verbose:
+                                    print(f'took total time {time.time() - self.init_total_time}')
+                                return all_prefs, p
                             else:
-                                dft.loc[self.winner, :] = -1
-                                dft.loc[:, self.winner] = 1
-                                dft.loc[self.winner, self.winner] = 0
-
-                                all_prefs[self.preference_idx] = dft
-                                assert check_transitivity(dft)
-                                winner, *_ = evaluate_profile(
-                                    all_prefs, self.k, self.method, self.alphabetical_order_of_alternatives
-                                )
-                                assert winner == p
-                                return all_prefs, winner
+                                continue
                         else:
-                            continue
-
-                elif self.method == 'veto':
-                    raise NotImplementedError()
-                    # scores_of_alternatives[str(p)] = 1
-                    # scores_of_alternatives[str(self.winner)] = 0
-                    # would_win = get_winners_from_scores(scores_of_alternatives,
-                    #                                     self.alphabetical_order_of_alternatives)[0] == p
-                    # if would_win:
-                    #     dft = all_prefs[self.preference_idx]
-                    #     if ((dft.loc[self.winner] == 0).sum() != 0 and not self.do_additions) or (
-                    #             (dft.loc[self.winner] == -1).sum() != 0 and not self.do_flips):
-                    #         continue
-                    #     else:
-                    #         dft.loc[p, :] = 1
-                    #         dft.loc[:, p] = -1
-                    #         dft.loc[p, p] = 0
-                    #
-                    #         all_prefs[self.preference_idx] = dft
-                    #         assert check_transitivity(dft)
-                    #         winner, *_ = evaluate_profile(all_prefs, self.k, self.method,
-                    #                                       self.alphabetical_order_of_alternatives)
-                    #         assert winner == p
-                    #         return all_prefs, winner
-                    # else:
-                    #     continue
+                            scores_of_alternatives[str(p)] += 1
+                            would_win = get_winners_from_scores(
+                                scores_of_alternatives, self.alphabetical_order_of_alternatives
+                            )[0] == p
+                            if would_win:
+                                dft = all_prefs[self.preference_idx]
+                                if ((dft.loc[p] == 0).sum() != 0 and
+                                    not self.do_additions) or ((dft.loc[p] == -1).sum() != 0 and not self.do_flips):
+                                    continue
+                                else:
+                                    winner = self.put_p_on_top(all_prefs, dft, p)
+                                    return all_prefs, winner
+                            else:
+                                continue
 
             if p_score == 1 and winner_score == 0:
                 if self.verbose:
@@ -338,6 +374,26 @@ class Manipulation:
                     pass  # continue with next alternative
 
         return None
+
+    def put_winner_on_bottom(self, all_prefs, dft, p):
+        dft.loc[self.winner, :] = -1
+        dft.loc[:, self.winner] = 1
+        dft.loc[self.winner, self.winner] = 0
+        assert check_transitivity(dft)
+        all_prefs[self.preference_idx] = dft
+        winner, *_ = evaluate_profile(all_prefs, self.k, self.method, self.alphabetical_order_of_alternatives)
+        assert winner == p
+        return winner
+
+    def put_p_on_top(self, all_prefs, dft, p):
+        dft.loc[p, :] = 1
+        dft.loc[:, p] = -1
+        dft.loc[p, p] = 0
+        assert check_transitivity(dft)
+        all_prefs[self.preference_idx] = dft
+        winner, *_ = evaluate_profile(all_prefs, self.k, self.method, self.alphabetical_order_of_alternatives)
+        assert winner == p
+        return winner
 
     def tree_generation(self, p, potential_winners: list = None) -> Tuple[List[pd.DataFrame], bool, bool]:
         """
