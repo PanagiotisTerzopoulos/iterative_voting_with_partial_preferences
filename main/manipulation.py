@@ -133,7 +133,7 @@ class Manipulation:
             p_score = get_score_of_alternative_by_voter(self.preference, self.method, self.k, p)
 
             if self.k == len(self.preference) - 1:
-
+                raise NotImplementedError('This still needs work...')
                 all_prefs = list(copy.deepcopy(self.all_preferences))
                 scores_of_alternatives = copy.deepcopy(self.scores_of_alternatives)
 
@@ -153,7 +153,7 @@ class Manipulation:
                                                                not self.do_flips):
                                     continue
                                 else:
-                                    winner = self.put_winner_on_bottom(all_prefs, dft, p)
+                                    all_prefs, winner = self.put_winner_on_bottom(all_prefs, dft, p)
                                     return all_prefs, winner
                             else:
                                 continue
@@ -184,7 +184,7 @@ class Manipulation:
                                                                not self.do_flips):
                                     continue
                                 else:
-                                    winner = self.put_winner_on_bottom(all_prefs, dft, p)
+                                    all_prefs, winner = self.put_winner_on_bottom(all_prefs, dft, p)
                                     return all_prefs, winner
                             else:
                                 continue
@@ -380,10 +380,11 @@ class Manipulation:
         dft.loc[:, self.winner] = 1
         dft.loc[self.winner, self.winner] = 0
         assert check_transitivity(dft)
-        all_prefs[self.preference_idx] = dft
+        all_prefs[self.preference_idx] = dft  # this is not necessary cause all_preds is mutable
         winner, *_ = evaluate_profile(all_prefs, self.k, self.method, self.alphabetical_order_of_alternatives)
+        print(winner, p)
         assert winner == p
-        return winner
+        return all_prefs, winner
 
     def put_p_on_top(self, all_prefs, dft, p):
         dft.loc[p, :] = 1
