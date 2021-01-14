@@ -12,7 +12,7 @@ def main():
         for num_voters in [10, 20, 50]:
             for complete_profiles in [True, False]:
                 for data_type in ['ic', '2urn']:
-                    method = 'approval'
+                    method = 'veto'
                     time_limit = 900
                     retry_slow_ones = False
                     k = 1
@@ -21,7 +21,7 @@ def main():
                     do_additions = True
                     do_flips = True
                     random_choice = None
-                    num_iterations = 50
+                    num_iterations = 1
                     overwrite = False
                     verbose = False
 
@@ -29,7 +29,7 @@ def main():
                         suffix = '_complete'
                     else:
                         suffix = '_incomplete'
-                    with open(f'data\our_data{suffix}.pkl', 'rb') as f:
+                    with open(f'data/our_data{suffix}.pkl', 'rb') as f:
                         all_data = dill.load(f)
                 
                     alphabetical_order = {}
@@ -39,8 +39,8 @@ def main():
                     data_to_use = all_data[(num_voters, num_alt, data_type)]
 
                 
-                    if os.path.isfile('data\results\total_result.pkl'):
-                        with open('data\results\total_result.pkl', 'rb') as f:
+                    if os.path.isfile('data/results/total_result.pkl'):
+                        with open('data/results/total_result.pkl', 'rb') as f:
                             total_result = dill.load(f)
                     else:
                         total_result = {}
@@ -71,7 +71,7 @@ def main():
                                 )
                                 if result == 'hard_exit':
                                     total_result[key] = 'hard_exit'
-                                    with open('data\results\total_result.pkl', 'wb') as f:
+                                    with open('data/results/total_result.pkl', 'wb') as f:
                                         dill.dump(total_result, f)
                                     break
                                 else:
@@ -79,7 +79,7 @@ def main():
                                     total_result[key] = (convergence_happened, res_dict)
                                     # if it cannot manipulate for this profile then it doesn't make sense running the profile
                                     # multiple times cause the random order doesn't play a role
-                                    with open('data\results\total_result.pkl', 'wb') as f:
+                                    with open('data/results/total_result.pkl', 'wb') as f:
                                         dill.dump(total_result, f)
                                     if not res_dict:
                                         break
