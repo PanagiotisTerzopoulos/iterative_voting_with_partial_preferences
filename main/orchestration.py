@@ -18,8 +18,7 @@ def select_new_random_voter(failed, total_num, voter_to_exclude):
 
 
 def voting_iteration(
-    all_preferences, verbose, k, method, alphabetical_order, do_additions, do_omissions, do_flips, cycle_limit,
-    time_limit
+    all_preferences, verbose, k, method, alphabetical_order, do_additions, do_omissions, do_flips, time_limit
 ) -> Union[str, Tuple[bool, Dict[int, Tuple[int, int]]]]:
     """
     Full iteration per profile. 0 to many manipulations happens and ends either with convergence or not.
@@ -32,7 +31,6 @@ def voting_iteration(
         do_additions:
         do_omissions:
         do_flips:
-        cycle_limit:
         time_limit:
 
     Returns:
@@ -90,9 +88,6 @@ def voting_iteration(
             if verbose:
                 print(f'num of round {num_rounds}')
             failed_manipulators = []
-            if num_rounds > cycle_limit:
-                print(f'No convergence for {cycle_limit} rounds. Assumed a cycle.')
-                continue
             manipulator_voter = random_voter
         else:
             if verbose:

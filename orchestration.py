@@ -34,8 +34,8 @@ def main(args):
         all_preferences = data_to_use[random_profile]
         for meta_counter in range(args.num_iterations):
             key = (
-                args.num_alt, args.num_voters, args.data_type, random_profile, args.k, args.method, args.cycle_limit,
-                meta_counter, args.do_additions, args.do_omissions, args.do_flips, args.complete_profiles
+                args.num_alt, args.num_voters, args.data_type, random_profile, args.k, args.method, meta_counter,
+                args.do_additions, args.do_omissions, args.do_flips, args.complete_profiles
             )
             calculate_it = False
             if key not in total_result.keys():
@@ -48,7 +48,7 @@ def main(args):
             if calculate_it:
                 result = voting_iteration(
                     all_preferences, args.verbose, args.k, args.method, alphabetical_order, args.do_additions,
-                    args.do_omissions, args.do_flips, args.cycle_limit, args.time_limit
+                    args.do_omissions, args.do_flips, args.time_limit
                 )
                 if result == 'hard_exit':
                     total_result[key] = 'hard_exit'
@@ -75,7 +75,6 @@ if __name__ == '__main__':
     parser.add_argument('--random_choice', type=int, default=None)
     parser.add_argument('--k', type=int, default=1)
     parser.add_argument('--method', type=str, default='approval')
-    parser.add_argument('--cycle_limit', type=int, default=100)
     parser.add_argument('--num_iterations', type=int, default=1)
     parser.add_argument('--do_additions', type=bool, default=True)
     parser.add_argument('--do_omissions', type=bool, default=True)
