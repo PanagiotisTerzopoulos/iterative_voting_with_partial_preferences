@@ -16,7 +16,6 @@ def main():
                     time_limit = 900
                     retry_slow_ones = False
                     k = 1
-                    cycle_limit = 100
                     do_omissions = True
                     do_additions = True
                     do_flips = True
@@ -38,7 +37,6 @@ def main():
 
                     data_to_use = all_data[(num_voters, num_alt, data_type)]
 
-                
                     if os.path.isfile('data/results/total_result.pkl'):
                         with open('data/results/total_result.pkl', 'rb') as f:
                             total_result = dill.load(f)
@@ -51,8 +49,8 @@ def main():
                         all_preferences = data_to_use[random_profile]
                         for meta_counter in range(num_iterations):
                             key = (
-                                num_alt, num_voters, data_type, random_profile, k, method, cycle_limit,
-                                meta_counter, do_additions, do_omissions, do_flips, complete_profiles
+                                num_alt, num_voters, data_type, random_profile, k, method, meta_counter, do_additions,
+                                do_omissions, do_flips, complete_profiles
                             )
 
                             calculate_it = False
@@ -66,8 +64,8 @@ def main():
                             if calculate_it:
                                 print(f'running {key}')
                                 result = voting_iteration(
-                                    all_preferences, verbose, k, method, alphabetical_order, do_additions,
-                                    do_omissions, do_flips, cycle_limit, time_limit
+                                    all_preferences, verbose, k, method, alphabetical_order, do_additions, do_omissions,
+                                    do_flips, time_limit
                                 )
                                 if result == 'hard_exit':
                                     total_result[key] = 'hard_exit'
