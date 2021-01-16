@@ -133,7 +133,6 @@ class Manipulation:
             p_score = get_score_of_alternative_by_voter(self.preference, self.method, self.k, p)
 
             if self.k == len(self.preference) - 1:
-                raise NotImplementedError('This still needs work...')
                 all_prefs = list(copy.deepcopy(self.all_preferences))
                 scores_of_alternatives = copy.deepcopy(self.scores_of_alternatives)
 
@@ -147,14 +146,18 @@ class Manipulation:
                                 scores_of_alternatives, self.alphabetical_order_of_alternatives
                             )[0] == p
                             if would_win:
-                                dft = all_prefs[self.preference_idx]
+                                dft = copy.deepcopy(all_prefs[self.preference_idx])
                                 if ((dft.loc[self.winner] == 0).sum() != 0 and
                                     not self.do_additions) or ((dft.loc[self.winner] == 1).sum() != 0 and
                                                                not self.do_flips):
                                     continue
                                 else:
-                                    all_prefs, winner = self.put_winner_on_bottom(all_prefs, dft, p)
-                                    return all_prefs, winner
+                                    winner, dft = self.put_winner_on_bottom(all_prefs, dft)
+                                    if winner == p:
+                                        all_prefs[self.preference_idx] = dft
+                                        return all_prefs, winner
+                                    else:
+                                        continue
                             else:
                                 continue
                         # we are here if p_score == 0 (cause p_score != 1)
@@ -184,12 +187,16 @@ class Manipulation:
                                                                not self.do_flips):
                                     continue
                                 else:
-                                    all_prefs, winner = self.put_winner_on_bottom(all_prefs, dft, p)
-                                    return all_prefs, winner
+                                    winner, dft = self.put_winner_on_bottom(all_prefs, dft)
+                                    if winner == p:
+                                        all_prefs[self.preference_idx] = dft
+                                        return all_prefs, winner
+                                    else:
+                                        continue
                             else:
                                 continue
 
-                else:
+                else:  # veto
                     if p_score == 1:
                         continue
                     else:  # p_score = 0
@@ -375,16 +382,13 @@ class Manipulation:
 
         return None
 
-    def put_winner_on_bottom(self, all_prefs, dft, p):
+    def put_winner_on_bottom(self, all_prefs, dft):
         dft.loc[self.winner, :] = -1
         dft.loc[:, self.winner] = 1
         dft.loc[self.winner, self.winner] = 0
         assert check_transitivity(dft)
-        all_prefs[self.preference_idx] = dft  # this is not necessary cause all_preds is mutable
         winner, *_ = evaluate_profile(all_prefs, self.k, self.method, self.alphabetical_order_of_alternatives)
-        print(winner, p)
-        assert winner == p
-        return all_prefs, winner
+        return winner, dft
 
     def put_p_on_top(self, all_prefs, dft, p):
         dft.loc[p, :] = 1
