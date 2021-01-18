@@ -387,7 +387,9 @@ class Manipulation:
         dft.loc[:, self.winner] = 1
         dft.loc[self.winner, self.winner] = 0
         assert check_transitivity(dft)
-        winner, *_ = evaluate_profile(all_prefs, self.k, self.method, self.alphabetical_order_of_alternatives)
+        new_prefs = copy.deepcopy(all_prefs)
+        new_prefs[self.preference_idx] = dft
+        winner, *_ = evaluate_profile(new_prefs, self.k, self.method, self.alphabetical_order_of_alternatives)
         return winner, dft
 
     def put_p_on_top(self, all_prefs, dft, p):
