@@ -55,7 +55,7 @@ def main():
                             calculate_it = False
                             if key not in total_result.keys():
                                 calculate_it = True
-                                print(f'key {key} already exists')
+                                print(f'key {key} does not exist and will be calculated')
                             elif total_result[key] == 'hard_exit' and retry_slow_ones:
                                 calculate_it = True
                                 print(f'key {key} is found as hard exit and will retry')
