@@ -8,14 +8,20 @@ from main.orchestration import voting_iteration
 
 
 def main():
-    for num_alt in [3, 4, 5]:
-        for num_voters in [10, 20, 50]:
-            for complete_profiles in [True, False]:
+    for complete_profiles in [True, False]:
+        if complete_profiles:
+            suffix = '_complete'
+        else:
+            suffix = '_incomplete'
+        with open(f'data/our_data{suffix}.pkl', 'rb') as f:
+            all_data = dill.load(f)
+        for num_alt in [4, 5]:
+            for num_voters in [10, 20, 50]:
                 for data_type in ['ic', '2urn']:
                     method = 'veto'
                     time_limit = 900
                     retry_slow_ones = False
-                    k = 1
+                    k = num_alt-1
                     do_omissions = True
                     do_additions = True
                     do_flips = True
@@ -23,13 +29,6 @@ def main():
                     num_iterations = 1
                     overwrite = False
                     verbose = False
-
-                    if complete_profiles:
-                        suffix = '_complete'
-                    else:
-                        suffix = '_incomplete'
-                    with open(f'data/our_data{suffix}.pkl', 'rb') as f:
-                        all_data = dill.load(f)
 
                     alphabetical_order = {}
                     for i in range(num_alt):
@@ -56,10 +55,15 @@ def main():
                             calculate_it = False
                             if key not in total_result.keys():
                                 calculate_it = True
+                                print(f'key {key} already exists')
                             elif total_result[key] == 'hard_exit' and retry_slow_ones:
                                 calculate_it = True
+                                print(f'key {key} is found as hard exit and will retry')
                             elif overwrite:
                                 calculate_it = True
+                                print(f'key {key} exists in results and will overwrite it')
+                            else:
+                                print(f'{key} exists and will not overwrite')
 
                             if calculate_it:
                                 print(f'running {key}')
