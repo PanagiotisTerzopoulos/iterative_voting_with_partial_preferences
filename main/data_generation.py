@@ -61,14 +61,17 @@ def profile_generation(alt_number: int, vot_number: int, method: str, complete: 
         while pref_2.equals(pref_1):
             pref_2 = func(alt_number)
 
-        for _ in range(math.floor(vot_number / 3)):
-            gprofile.append(pref_1)
-            gprofile.append(pref_2)
-
-        for i in range(vot_number - 2 * math.floor(vot_number / 3)):
-            gprofile.append(func(alt_number))
-
-    # TODO: create 3urn method as well
+        for _ in range(vot_number):
+            random_pref_assignment = random.randrange(3)
+            if random_pref_assignment == 0:
+                gprofile.append(pref_1)
+            elif random_pref_assignment == 1:
+                gprofile.append(pref_2)
+            else:
+                pref_3 = func(alt_number)
+                while pref_3.equals(pref_1) or pref_3.equals(pref_2):
+                    pref_3 = func(alt_number)
+                gprofile.append(pref_3)
 
     return gprofile
 
