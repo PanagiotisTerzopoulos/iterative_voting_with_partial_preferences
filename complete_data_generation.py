@@ -26,5 +26,5 @@ for c in tqdm(comb):
     profiles[c] = {
         i: profile_generation(c[1], c[0], c[2], complete=True) for i in tqdm(range(200), desc='random iterations')
     }
-    with open('data/our_data_complete.pkl', 'wb') as f:
-        dill.dump(profiles, f)
+with open('data/our_data_complete.pkl', 'wb') as f:
+    dill.dump(profiles, f)
