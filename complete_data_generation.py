@@ -1,10 +1,16 @@
+"""
+This script is meant to be run individually to generate artificial data of complete preferences to run experiments on.
+"""
+
 import os
 
 import dill
 from tqdm import tqdm
 
 from main.data_generation import profile_generation
-
+'''
+The parameters below can be changed. Data will be generated for all the combinations of these.
+'''
 num_voters = [10, 20, 50]
 num_alternatives = [3, 4, 5]
 methods = ['2urn']

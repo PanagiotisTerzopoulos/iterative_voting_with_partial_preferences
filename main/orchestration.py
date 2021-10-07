@@ -1,3 +1,8 @@
+"""
+This module contains the high level orchestration, i.e. calling of functions in order, needed to run a full voting
+iteration cycle.
+"""
+
 from copy import copy
 from typing import Dict, Tuple, Union
 
@@ -22,20 +27,10 @@ def voting_iteration(
 ) -> Union[str, Tuple[bool, Dict[int, Tuple[int, int]]]]:
     """
     Full iteration per profile. 0 to many manipulations happens and ends either with convergence or not.
-    Args:
-        all_preferences:
-        verbose:
-        k:
-        method:
-        alphabetical_order:
-        do_additions:
-        do_omissions:
-        do_flips:
-        time_limit:
 
     Returns:
-    (whether_convergence, {round: (winner, voter) for all rounds}) or sring "hard_exit" if more than 30' passed
-    trying to converge on this profile.
+    (whether_convergence, {round: (winner, voter) for all rounds}) or the string "hard_exit" if more than time_limit
+     passed trying to converge on this profile.
     """
     current_profile = copy(
         all_preferences

@@ -1,4 +1,7 @@
-import math
+"""
+Module that includes all utilities functions that have to do with the artificial data generation.
+"""
+
 import os
 import random
 import sys
@@ -7,6 +10,7 @@ from typing import List
 import numpy as np
 import pandas as pd
 
+# The small patch below sovles importing modules issues on windows computers.
 curr_path = os.path.realpath(__file__)
 if curr_path.split('/iterative_voting/main')[0] not in sys.path:
     sys.path.append(curr_path.split('/iterative_voting/main')[0])

@@ -7,7 +7,6 @@ from typing import List, Tuple, Union
 
 import pandas as pd
 
-# TODO: fix this
 curr_path = os.path.realpath(__file__)
 if curr_path.split('/iterative_voting/main')[0] not in sys.path:
     sys.path.append(curr_path.split('/iterative_voting/main')[0])
@@ -117,7 +116,6 @@ class Manipulation:
             None if Manipulation cannot happen or the new profile and the winner in a tuple if manipulation happens.
             Also if it takes more than 30' to work on this profile it returns a string saying "hard_exit"
         """
-        # TODO: this function probably doesn't need to return the winner, just the new profile
         # alternatives_to_check are all the possible winners that the current voter truthfully prefers to the profile
         # winner (self.w)
         if self.verbose:
@@ -565,11 +563,6 @@ class Manipulation:
         all_prefs_tmp = copy.deepcopy(all_prefs)
         for pref_cost, _, pref in new_preferences:
             all_prefs_tmp[self.preference_idx] = pref
-            # TODO: NB: make this code more efficient. we don't need to evaluate the whole profile every
-            #  time. we have the scores of alternatives dictionary and we can calculate with the
-            #  'get_score_of_alternative_by_voter' function the score the old preference gives and the
-            #  one the new pref gives. Substract once for all the alternatives the old scores of the
-            #  voter and then add the new ones (for all alternatives) each time you check a preference.
             winner, *_ = evaluate_profile(all_prefs_tmp, self.k, self.method, self.alphabetical_order_of_alternatives)
             if winner == p and check_transitivity(pref):
                 if self.verbose:

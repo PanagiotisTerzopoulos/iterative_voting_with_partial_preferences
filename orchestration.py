@@ -1,3 +1,14 @@
+"""
+This is the main entrypoint script which will automatically run all the computational experiments on the complete or
+the incomplete data, generate and save the results. See lines 76-90 for all the possible arguments that can be passed
+along the script call.
+
+E.g. of script call:
+```
+ python orchestration.py --num_alt 5 --num_voter 10 --data_type 2urn --k 4 --method approval --time_limit 900
+ ```
+"""
+
 import argparse
 import os
 

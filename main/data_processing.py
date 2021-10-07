@@ -1,3 +1,8 @@
+"""
+This module includes utility functions that have to do with calculating basic preferences and profile attributes like
+the score of a specific alternative in a preference or the winner given a profile.
+"""
+
 from typing import List, Tuple
 
 import matplotlib.pyplot as plt

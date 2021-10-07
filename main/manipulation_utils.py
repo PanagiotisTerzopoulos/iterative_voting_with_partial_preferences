@@ -111,11 +111,6 @@ def one_cost_children_generation(
     Returns:
         A list of tuples: (cost-label_of_child, indices_changed_from_the_parent, child)
     """
-    # TODO: NB: make this function more efficient. We shouldn't generate all the matrices everytime and in the end drop
-    #  the "matrices_not_generate", but generate only the ones we need from the beginning. The ones we don't need are
-    #  some that change specific cells that had be changed in the past (not to be confused with relevant_cells which
-    #  are actually relevant rows). So we need an argument that passes these specific cells ((row, col) tuple) and we
-    #  don't need at all the "matrices_not_to_generate" in this case.
     if index_of_w or index_of_p:
         assert rule in ['veto', 'approval']
     assert do_additions is not None
@@ -242,11 +237,6 @@ def two_cost_children_generation(
     Returns:
         A list of tuples: (cost-label_of_child, child)
     """
-    # TODO: NB: make this function more efficient. We shouldn't generate all the matrices everytime and in the end drop
-    #  the "matrices_not_generate", but generate only the ones we need from the beginning. The ones we don't need are
-    #  some that change specific cells that had be changed in the past (not to be confused with relevant_cells which
-    #  are actually relevant rows). So we need an argument that passes these specific cells ((row, col) tuple) and we
-    #  don't need at all the "matrices_not_to_generate" in this case.
     if index_of_w or index_of_p:
         assert rule in ['veto', 'approval']
     assert set(alternatives_of_only_useful_changes).issubset(set(alternatives_of_interest))
