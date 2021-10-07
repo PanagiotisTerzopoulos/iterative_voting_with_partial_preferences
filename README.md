@@ -8,7 +8,7 @@ This supplementary material includes the code required to reproduce the simulati
 For every combination of voters n=10,20,50 and alternatives m=3,4,5, there are 200 complete profiles and 200 incomplete profiles generated under the IC assumption (i.e, uniformly at random) and under the 2urn model. 
 
 ## To reproduce the plots in the paper
-There jupyter notebook `orchestration_plots.ipynb` included in this repo is a step-by-step guide, with read to run code that generates a family of plots out of which specifics were chosen and presented in the paper.
+There is a jupyter notebook called `orchestration_plots.ipynb` included in this repo which is a step-by-step guide, with ready to run code that generates a family of plots out of which specifics were chosen and presented in the paper. Feel free to try it!
 
 ## Package dependencies
 Only the most basic packages are needed for one to run every part of this framework (usually get installed automatically with a full anaconda - python 3.8 installation).

@@ -1,5 +1,5 @@
 """
-Module that includes all utilities functions that have to do with the artificial data generation.
+Module that includes all utility functions that have to do with the artificial data generation.
 """
 
 import os

@@ -1,5 +1,5 @@
 """
-This module includes all utility functions useful for the main "manipulation" action. These mostly includes
+This module includes all utility functions useful for the main "manipulation" action. These mostly include
 subfunctionalities of the "tree_generation" method in 'manipulation.py', i.e. the exploration of different options
 the agent considers when trying to manipulate.
 """
