@@ -5,9 +5,6 @@ the score of a specific alternative in a preference or the winner given a profil
 
 from typing import List, Tuple
 
-import matplotlib.pyplot as plt
-import networkx as nx
-import numpy as np
 import pandas as pd
 
 
@@ -38,14 +35,6 @@ def find_sum_of_alternatives(graphs: List[pd.DataFrame], k: int, method: str, nu
             d[str(alternative)] += get_score_of_alternative_by_voter(g, method, k, alternative)
 
     return d
-
-
-def check_for_cycle(all_appeared_profiles: List[np.array], graphs: List[pd.DataFrame]) -> bool:
-    graphs_values = np.array([g.values for g in graphs])
-    for previous_profile in all_appeared_profiles:
-        if np.array_equal(graphs_values, previous_profile):
-            return True
-    return False
 
 
 def get_winners_from_scores(
@@ -79,26 +68,11 @@ def check_transitivity(graph: pd.DataFrame) -> bool:
     return True
 
 
-def get_edges(df: pd.DataFrame) -> List[Tuple[str, str]]:
-    tuples = []
-    for i, row in df.iterrows():
-        for col in df.columns:
-            if row[col] == 1:
-                tuples.append((str(i), str(col)))
-    return tuples
-
-
-def create_graph_from_matrix(preference: pd.DataFrame) -> plt.figure:
-    G = nx.DiGraph()
-    G.add_edges_from(get_edges(preference))
-    pos = nx.spring_layout(G)
-    nx.draw_networkx_labels(G, pos)
-    nx.draw_networkx_edges(G, pos, edge_color='black', arrows=True, arrowsize=30)
-    nx.draw_networkx_nodes(G, pos, cmap=plt.get_cmap('jet'), node_size=500)
-    return
-
-
 def get_social_welfare_of_alternative(profile: List[pd.DataFrame], alt: int):
+    '''
+    This function is only neeeded for the orchestration_plots.ipynb notebook that reproduces the plots of the
+    original publication.
+    '''
     social_welfare = 0
     for vot in profile:
         social_welfare += ((vot.loc[alt] == 1).sum() - (vot.loc[alt] == -1).sum())

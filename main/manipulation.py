@@ -1,3 +1,8 @@
+"""
+This module includes the main logic behind the "manipulation" action. It is basically the main functionality that
+defines how an agent votes in different scenaria and explores efficiently the different options of her.
+"""
+
 import copy
 import os
 import random
@@ -6,7 +11,9 @@ import time
 from typing import List, Tuple, Union
 
 import pandas as pd
-
+'''
+Simple patch that fixes imports issues in windows OS.
+'''
 curr_path = os.path.realpath(__file__)
 if curr_path.split('/iterative_voting/main')[0] not in sys.path:
     sys.path.append(curr_path.split('/iterative_voting/main')[0])
