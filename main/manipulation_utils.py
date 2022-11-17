@@ -10,7 +10,7 @@ from typing import List, Tuple, Union
 
 import pandas as pd
 
-from iterative_voting.main.data_processing import check_transitivity
+from main.data_processing import check_transitivity
 
 
 def useful_change(

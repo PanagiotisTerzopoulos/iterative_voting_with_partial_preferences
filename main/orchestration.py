@@ -30,14 +30,13 @@ def voting_iteration(
 
     Returns:
     (whether_convergence, {round: (winner, voter) for all rounds}) or the string "hard_exit" if more than time_limit
-     passed trying to converge on this profile.
+     passed trying to converge on this profile. Voter is the last voter that was able to manipulate before convergence happened.
     """
     current_profile = copy(
         all_preferences
     )  # Initialize the current profile of preferences for all voters.to be the same as the truthful profile.
 
     num_rounds = 0
-    convergence_happened = False
     res_dict = {}
     failed_manipulators = []
     manipulator_voter = None

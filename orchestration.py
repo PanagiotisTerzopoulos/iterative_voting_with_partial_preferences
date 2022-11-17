@@ -1,6 +1,6 @@
 """
 This is the main entrypoint script which will automatically run all the computational experiments on the complete or
-the incomplete data, generate and save the results. See lines 76-90 for all the possible arguments that can be passed
+the incomplete data, generate and save the results. See the bottom for all the possible arguments that can be passed
 along the script call.
 
 E.g. of script call:
